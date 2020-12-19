@@ -34,17 +34,17 @@ Imports:
     shinyjs,
     GSEABase,
     maftools
-Remotes:bioc::maftools,
-        bioc::TCGAbiolinks,
-        bioc::GSVA,
-        bioc::GSVAdata,
-        bioc::limma,
-        bioc::GSEAbase,
-        bioc::org.Hs.eg.db,
-        bioc::edgeR,
-        bioc::survival,
-        bioc::clusterProfil,
-        bioc::SummarizedExperiment
+Remotes:bioc::3.12/maftools,
+        bioc::3.12/TCGAbiolinks,
+        bioc::3.12/GSVA,
+        bioc::3.12/GSVAdata,
+        bioc::3.12/limma,
+        bioc::3.12/GSEAbase,
+        bioc::3.12/org.Hs.eg.db,
+        bioc::3.12/edgeR,
+        bioc::3.12/survival,
+        bioc::3.12/clusterProfil,
+        bioc::3.12/SummarizedExperiment
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
