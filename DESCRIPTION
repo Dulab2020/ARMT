@@ -1,0 +1,40 @@
+Package: Wstation
+Title: An Amazing Shiny App
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "firstname",
+           family = "lastname",
+           role = c("aut", "cre"),
+           email = "1003589085@qq.com")
+Description: What the package does (one paragraph).
+License: What license is it under?
+Imports: 
+    config,
+    golem,
+    shiny,
+    clusterProfiler,
+    data.table,
+    DOSE,
+    edgeR,
+    ggplot2,
+    ggpubr,
+    GSVA,
+    GSVAdata,
+    limma,
+    maftools,
+    org.Hs.eg.db,
+    pheatmap,
+    psych,
+    survival,
+    dplyr,
+    DT,
+    SummarizedExperiment,
+    TCGAbiolinks,
+    shinythemes,
+    shinyjs,
+    GSEABase
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+Depends: 
+    R (>= 2.10)
