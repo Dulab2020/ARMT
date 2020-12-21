@@ -8,7 +8,7 @@
 #' @import shinyjs
 #' @noRd
 app_ui <- function(request) {
-  data("interdata")
+  data("interdata", package = 'Wstation')
   geneLength <- interdata$gLen
   geneSet <- interdata$gSet
   fluidPage( theme = shinytheme('flatly'),

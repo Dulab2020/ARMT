@@ -14,7 +14,7 @@
 #'  @import pheatmap
 #'  @import data.table
 #'  @import GSEABase
-data("interdata")
+data("interdata", package = 'Wstation')
 geneLength <- interdata$gLen
 geneSet <- interdata$gSet
 
