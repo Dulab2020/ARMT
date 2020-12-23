@@ -273,7 +273,7 @@ app_server <- function( input, output, session ) {
         differResult <- deaResult()[deaResult()$PValue <= input$pCutOff, , drop = FALSE]
         differResult <- differResult[differResult$FDR <= input$fdrCutOff, , drop = FALSE]
       }
-      else if(input$deaWay == 'limma'){
+      else if(input$deaWay == 'lm'){
         differResult <- deaResult()[deaResult()$P.Value <= input$pCutOff, , drop = FALSE]
         differResult <- differResult[differResult$adj.P.Val <= input$fdrCutOff, , drop = FALSE]
       }
