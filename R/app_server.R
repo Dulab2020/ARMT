@@ -23,6 +23,7 @@
 #' @import psych
 #' @import pheatmap
 #' @import GSEABase
+#' @import ggcorrplot
 #' @noRd
 app_server <- function( input, output, session ) {
   options(shiny.maxRequestSize=10000*1024^2)

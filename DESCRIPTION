@@ -34,7 +34,8 @@ Imports:
     shinyjs,
     GSEABase,
     maftools,
-    survminer
+    survminer,
+    ggcorrplot
 biocViews:
 Encoding: UTF-8
 LazyData: true

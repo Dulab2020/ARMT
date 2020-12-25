@@ -14,6 +14,7 @@
 #'  @import pheatmap
 #'  @import data.table
 #'  @import GSEABase
+#'  @import ggcorrplot
 data("interdata", package = 'Wstation')
 geneLength <- interdata$gLen
 geneSet <- interdata$gSet
@@ -390,19 +391,7 @@ corMatScreen <- function(data, scrData, rcut, pcut){
 
 #热图
 plotHeat <- function(data){
-  pHeat <- pheatmap(data,cluster_cols = F,cluster_rows = F, 
-                    #fontsize = 10,
-                    #angle_col =45,
-                    ##border_color = "grey40",
-                    #border = F,
-                    #cellwidth = 3,
-                    #cellheight = 3, 
-                    ##treeheight_row = 10,
-                    ##treeheight_col = 10,
-                    #show_colnames = F,
-                    #show_rownames = T,
-                    na_col = 'white')
-                    #color = colorRampPalette(colors = c("midnightblue","yellow"))(1000))
+  pHeat <- ggcorrplot(data)
   return(pHeat)
 }
 
