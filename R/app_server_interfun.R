@@ -150,15 +150,25 @@ toSurStatus <- function(dt, status ,event){
   return(dt)
 }
 
+#列名符号换下划线
+sbToLine <- function(data){
+  names(data) <- gsub("[^[:alnum:]]", '_', names(data))
+  return(data)
+}
+
 #生存分析
 surAnalysis <- function(data, survivaltime, sta, t){
   if(is.numeric(data[,t])){data[,t] <- ifelse(data[,t] > median(data[,t]), 'High', 'Low')}
   data[,survivaltime]<-as.numeric(data[,survivaltime])
   data[,t] <- factor(as.character(data[,t]), order = TRUE)
+  ort <- t
+  t <- gsub("[^[:alnum:]]", '_', t)
+  names(data)[names(data) == ort] <- t
   #s 和f要是全局变量
   s<<-Surv(data[,survivaltime],data[,sta])
   f<<-as.formula(paste0('s','~',t))
   fit<-survfit(f[0:3], data=data)
+  names(fit$strata) <- sub(t, ort, names(fit$strata))
   suppressMessages(surplot <- ggsurvplot(fit = fit, data = data,  legend.title=t, palette=c("#F95006", "#33484C"),pval = TRUE,surv.median.line = "hv", legend=c(0.85,0.9)))
   remove(f, envir = parent.env(environment()))
   remove(s, envir = parent.env(environment()))
@@ -169,22 +179,39 @@ surAnalysis <- function(data, survivaltime, sta, t){
 #单因素COX
 singleCox <- function(data, survivaltime, sta, t){
   data[,survivaltime]<-as.numeric(data[,survivaltime])
+  ort <- t
+  t <- gsub("[^[:alnum:]]", '_', t)
+  names(data)[names(data) == ort] <- t
   s<-Surv(data[,survivaltime],data[,sta])
   f<-as.formula(paste0('s','~',t))
-  result <- coxph(f,data=data)
-  return(summary(result))
+  result <- summary(coxph(f,data=data))
+  rownames(result$coefficients) <- sub(t, ort, rownames(result$coefficients))
+  rownames(result$conf.int) <- sub(t, ort, rownames(result$conf.int))
+  return(result)
 }
 
 #多因素COX
 multipleCox <- function(data, survivaltime, sta, factable){
   data[,survivaltime]<-as.numeric(data[,survivaltime])
   factable<-as.vector(factable)
+  orfactable <- factable
+  for(i in 1:length(factable)){
+    if(!is.numeric(data[, factable[[i]]])){
+      data[, factable[[i]]] <- as.factor(data[,factable[[i]]])
+    }
+    factable[[i]] <- gsub("[^[:alnum:]]", '_', factable[[i]])
+    names(data)[names(data) == orfactable[[i]]] <- factable[[i]]
+  }
   s<-Surv(data[,survivaltime],data[,sta])
-  multif<-as.formula(paste0('s','~',paste(factable, collapse='+')))
+  multif<-as.formula(paste0('s','~',paste(factable, collapse ="+")))
   result<-coxph(multif,data=data)
+  orresult <- result
+  for(b in 1:length(factable)){
+    names(result$coefficients)[b] <- sub(factable[[b]] ,orfactable[[b]], names(result$coefficients)[[b]])
+  }
   #suppressMessages(forest <- ggforest(result, data = data, main = 'Hazard ratio', cpositions = c(0.02,0.2,0.4), fontsize = 1.0, refLabel = '1', noDigits = 4))
   #suppressMessages(ggsave('Cox_multiplefactor.pdf', plot = print(forest), path = outpath, width = 15, height = 10))
-  return(result)
+  return(list(or = orresult, re = result))
 }
 
 #edgeR

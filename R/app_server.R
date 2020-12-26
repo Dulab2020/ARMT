@@ -213,8 +213,8 @@ app_server <- function( input, output, session ) {
         verbatimTextOutput('singleCoxShow')
       }
       else if(isolate(input$surWay) == 'multipleCox'){
-        output$multipleCoxShow <- renderPrint(summary(surResult()))
-        output$multipleCoxForest <- renderPlot(ggforest(surResult(), data = surClin(), main = 'Hazard ratio', 
+        output$multipleCoxShow <- renderPrint(summary(surResult()$re))
+        output$multipleCoxForest <- renderPlot(ggforest(surResult()$or, data = sbToLine(surClin()), main = 'Hazard ratio', 
                                                         cpositions = c(0.01,input$forestColSite,0.4), 
                                                         fontsize = input$forestFont, refLabel = '1', noDigits = 4), width = 1000)
         fluidRow(verbatimTextOutput('multipleCoxShow'),
