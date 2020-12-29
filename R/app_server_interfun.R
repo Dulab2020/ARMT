@@ -29,7 +29,7 @@ readMatrix <- function(csvPath, rowFlag = TRUE){
     getread <- fread(csvPath$datapath, na.strings = NULL, check.name = FALSE, data.table = FALSE, stringsAsFactors = FALSE)
     if(rowFlag){
       rownames(getread) <- getread[,1]
-      getread <- getread[,-1]
+      getread <- getread[,-1, drop = FALSE]
     }
     return(getread)
 }
