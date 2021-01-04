@@ -26,7 +26,9 @@
 #' @import ggcorrplot
 #' @noRd
 app_server <- function( input, output, session ) {
-  options(shiny.maxRequestSize=10000*1024^2)
+  options(shiny.maxRequestSize=-1) # Remove limit of upload
+  options(shiny.deprecation.messages=FALSE)
+  options(warn =-1)
   #下载TCGA文件
   observe({
     allFlag <- input$all
