@@ -35,7 +35,8 @@ Imports:
     GSEABase,
     maftools,
     survminer,
-    ggcorrplot
+    ggcorrplot,
+    patchwork
 biocViews:
 Encoding: UTF-8
 LazyData: true

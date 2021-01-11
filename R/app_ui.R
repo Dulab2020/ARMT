@@ -126,6 +126,7 @@ app_ui <- function(request) {
                                                ), 
                                                mainPanel(
                                                  DT::DTOutput('showtest'),
+                                                 sliderInput('surPlotSize', 'Size:', min = 100, max = 800, value = 300),
                                                  uiOutput('surShow')
                                                )
                                              )

@@ -24,6 +24,7 @@
 #' @import pheatmap
 #' @import GSEABase
 #' @import ggcorrplot
+#' @import patchwork
 #' @noRd
 app_server <- function( input, output, session ) {
   options(shiny.maxRequestSize=-1) # Remove limit of upload
@@ -191,11 +192,18 @@ app_server <- function( input, output, session ) {
   })
   output$showtest <- DT::renderDT({
     tryCatch({surClin()[unique(c(input$surTime, input$surSta, input$surFactor))]}, error = function(x){NULL})
-  })
+  },  options=list(pageLength = 1))
+  shinyjs::hide('surPlotSize')
   #生存分析
   surResult <- eventReactive(input$calSur,{
     if(input$surWay == 'sur'){
-      surAnalysis(surClin(), input$surTime, input$surSta, input$surFactor[[1]])
+      allPlot <- surAnalysis(surClin(), input$surTime, input$surSta, input$surFactor[[1]])$plot
+      for(fac in input$surFactor){
+        if(fac == input$surFactor[[1]]){next}
+        allPlot <- allPlot + surAnalysis(surClin(), input$surTime, input$surSta, fac)$plot
+        
+      }
+      allPlot
     }
     else if(input$surWay == 'singleCox'){
       singleCox(surClin(), input$surTime, input$surSta, input$surFactor[[1]])
@@ -207,14 +215,19 @@ app_server <- function( input, output, session ) {
   output$surShow <- renderUI({
     if(!is.null(surResult())){
       if(isolate(input$surWay) == 'sur'){
-        output$surPlot <- renderPlot(surResult(), width = 600, height = 600)
+        output$surPlot <- renderPlot(surResult(),
+                                     width = ceiling(sqrt(length(isolate(input$surFactor))))*input$surPlotSize,
+                                     height = round(sqrt(length(isolate(input$surFactor))))*input$surPlotSize)
+        shinyjs::show('surPlotSize')
         plotOutput('surPlot')
       }
       else if(isolate(input$surWay) == 'singleCox'){
+        shinyjs::hide('surPlotSize')
         output$singleCoxShow <- renderPrint(surResult())
         verbatimTextOutput('singleCoxShow')
       }
       else if(isolate(input$surWay) == 'multipleCox'){
+        shinyjs::hide('surPlotSize')
         output$multipleCoxShow <- renderPrint(summary(surResult()$re))
         output$multipleCoxForest <- renderPlot(ggforest(surResult()$or, data = sbToLine(surClin()), main = 'Hazard ratio', 
                                                         cpositions = c(0.01,input$forestColSite,0.4), 
