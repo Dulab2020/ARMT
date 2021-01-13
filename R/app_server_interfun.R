@@ -184,9 +184,12 @@ singleCox <- function(data, survivaltime, sta, t){
   names(data)[names(data) == ort] <- t
   s<-Surv(data[,survivaltime],data[,sta])
   f<-as.formula(paste0('s','~',t))
-  result <- summary(coxph(f,data=data))
+  result <- coxph(f,data=data)
+  snum <- result$means
+  result <- summary(result)
   rownames(result$coefficients) <- sub(t, ort, rownames(result$coefficients))
   rownames(result$conf.int) <- sub(t, ort, rownames(result$conf.int))
+  result$sample_n <- round(snum*result$n)
   return(result)
 }
 
@@ -205,13 +208,69 @@ multipleCox <- function(data, survivaltime, sta, factable){
   s<-Surv(data[,survivaltime],data[,sta])
   multif<-as.formula(paste0('s','~',paste(factable, collapse ="+")))
   result<-coxph(multif,data=data)
-  orresult <- result
   for(b in 1:length(factable)){
     names(result$coefficients)[b] <- sub(factable[[b]] ,orfactable[[b]], names(result$coefficients)[[b]])
   }
-  #suppressMessages(forest <- ggforest(result, data = data, main = 'Hazard ratio', cpositions = c(0.02,0.2,0.4), fontsize = 1.0, refLabel = '1', noDigits = 4))
-  #suppressMessages(ggsave('Cox_multiplefactor.pdf', plot = print(forest), path = outpath, width = 15, height = 10))
-  return(list(or = orresult, re = result))
+  snum <- result$means
+  result <- summary(result)
+  result$sample_n <- round(snum*result$n)
+  return(result)
+}
+
+#Cox结果提炼
+getCoxTable <- function(data){
+  result <- as.data.frame(merge(data$coefficients,data$conf.int), drop=FALSE)
+  row.names(result) <- row.names(data$coefficients)
+  result$sample_number <- data$sample_n
+  names(result)[names(result) == 'exp(coef)'] <- 'HR'
+  names(result)[names(result) == 'Pr(>|z|)'] <- 'P-Value'
+  names(result)[names(result) == 'lower .95'] <- 'low95'
+  names(result)[names(result) == 'upper .95'] <- 'up95'
+  return(result)
+}
+
+#自制森林图
+diyForest <- function(data){
+  data$factor <- row.names(data)
+  data$up95 <- round(data$up95, 2)
+  data$low95 <- round(data$low95, 2)
+  data$HR <- round(data$HR, 2)
+  data$`P-Value` <- round(data$`P-Value`, 3)
+  unitX <- (max(data$up95) - min(data$low95))/5
+  X_max <- ceiling(max(data$up95)/unitX)*unitX
+  X_min <- floor(min(data$low95)/unitX)*unitX
+  #标记定位
+  data$X_low <- X_min - unitX/2 - unitX -unitX
+  data$X_up <- X_min -unitX/2 - unitX
+  data$X_Hr <- X_min - unitX/2
+  data$X_P <- X_max + unitX/2
+  data$Y <- c(1:nrow(data))
+  #提取标记坐标和标记
+  extractData <- function(xname, pname){
+    extract <- data[c(xname,'Y',pname)]
+    names(extract)[names(extract) == xname] = 'X'
+    names(extract)[names(extract) == pname] = 'Label'
+    newRow <- data.frame(extract$X[[1]], max(extract$Y)+1, pname)
+    names(newRow)<-names(extract)
+    extract <- rbind(extract, newRow)
+  }
+  #标记表
+  anno <- rbind(extractData('X_low', 'low95'), extractData('X_up', 'up95'))
+  anno <- rbind(anno, extractData('X_Hr', 'HR'))
+  anno <- rbind(anno, extractData('X_P', 'P-Value'))
+  forestResult<- ggplot(data, aes(HR, factor))+
+    geom_point(aes(size = sample_number, col = factor)) +
+    geom_errorbarh(aes(xmax = up95, xmin = low95), height = 0.4)+
+    geom_vline(aes(xintercept = 1))+
+    scale_x_continuous(limits = c(X_min-3*unitX, X_max+unitX), breaks = seq(X_min, X_max, (X_max-X_min)/5)) +
+    xlab(' ')+ylab(" ") + theme_bw() + theme(legend.position ="top") +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill ='skyblue', color ='red'),
+          axis.text=element_text(size=10, face = "bold"),legend.text=element_text(size=11))+
+    geom_text(data=anno, aes(x=X, y=Y, label=Label))+
+    scale_y_discrete(expand = c(0, 2))+
+    scale_color_discrete(guide = FALSE)
+  return(forestResult)
 }
 
 #edgeR

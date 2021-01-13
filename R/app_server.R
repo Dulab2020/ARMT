@@ -194,6 +194,7 @@ app_server <- function( input, output, session ) {
     tryCatch({surClin()[unique(c(input$surTime, input$surSta, input$surFactor))]}, error = function(x){NULL})
   },  options=list(pageLength = 1))
   shinyjs::hide('surPlotSize')
+  shinyjs::hide('forestSize')
   #生存分析
   surResult <- eventReactive(input$calSur,{
     if(input$surWay == 'sur'){
@@ -206,36 +207,38 @@ app_server <- function( input, output, session ) {
       allPlot
     }
     else if(input$surWay == 'singleCox'){
-      singleCox(surClin(), input$surTime, input$surSta, input$surFactor[[1]])
+      sCoxResult <- getCoxTable(singleCox(surClin(), input$surTime, input$surSta, input$surFactor[[1]]))
+      for(fac in input$surFactor){
+        if(fac == input$surFactor[[1]]){next}
+        sCox <- getCoxTable(singleCox(surClin(), input$surTime, input$surSta, fac))
+        sCoxResult <- rbind(sCoxResult, sCox)
+      }
+      sCoxResult
     }
     else if(input$surWay == 'multipleCox'){
-      multipleCox(surClin(), input$surTime, input$surSta, input$surFactor)
+      getCoxTable(multipleCox(surClin(), input$surTime, input$surSta, input$surFactor))
     }
   })
   output$surShow <- renderUI({
     if(!is.null(surResult())){
       if(isolate(input$surWay) == 'sur'){
+        shinyjs::hide('forestSize')
         output$surPlot <- renderPlot(surResult(),
                                      width = ceiling(sqrt(length(isolate(input$surFactor))))*input$surPlotSize,
                                      height = round(sqrt(length(isolate(input$surFactor))))*input$surPlotSize)
         shinyjs::show('surPlotSize')
-        plotOutput('surPlot')
+        plotOutput('surPlot', height = round(sqrt(length(isolate(input$surFactor))))*input$surPlotSize)
       }
-      else if(isolate(input$surWay) == 'singleCox'){
+      else{
         shinyjs::hide('surPlotSize')
-        output$singleCoxShow <- renderPrint(surResult())
-        verbatimTextOutput('singleCoxShow')
-      }
-      else if(isolate(input$surWay) == 'multipleCox'){
-        shinyjs::hide('surPlotSize')
-        output$multipleCoxShow <- renderPrint(summary(surResult()$re))
-        output$multipleCoxForest <- renderPlot(ggforest(surResult()$or, data = sbToLine(surClin()), main = 'Hazard ratio', 
-                                                        cpositions = c(0.01,input$forestColSite,0.4), 
-                                                        fontsize = input$forestFont, refLabel = '1', noDigits = 4), width = 1000)
-        fluidRow(verbatimTextOutput('multipleCoxShow'),
-                 column(width = 4, sliderInput('forestColSite', 'Column Site:', min = 0.02, max = 0.35, step = 0.01, value = 0.2)),
-                 column(width = 4, sliderInput('forestFont', 'Font Size:', min = 0.5, max = 1.5, step = 0.1, value = 1)),
-                 plotOutput('multipleCoxForest'))
+        output$singleCoxShow <- DT::renderDT(surResult())
+        output$singleCoxForest <- renderPlot(diyForest(surResult()),
+                                             width = input$forestSize,
+                                             height = 100+20*nrow(surResult()))
+        shinyjs::show('forestSize')
+        fluidRow(plotOutput('singleCoxForest', height = 100+20*nrow(surResult())),
+                 br(),
+                 DT::DTOutput('singleCoxShow'))
       }
     }
     else{NULL}

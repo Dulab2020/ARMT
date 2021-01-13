@@ -125,9 +125,11 @@ app_ui <- function(request) {
                                                  actionButton('calSur', 'Calculate')
                                                ), 
                                                mainPanel(
-                                                 DT::DTOutput('showtest'),
                                                  sliderInput('surPlotSize', 'Size:', min = 100, max = 800, value = 300),
-                                                 uiOutput('surShow')
+                                                 sliderInput('forestSize', 'Size:', min = 600, max = 1600, value = 800),
+                                                 uiOutput('surShow'),
+                                                 hr(),
+                                                 DT::DTOutput('showtest')
                                                )
                                              )
                                     ),
