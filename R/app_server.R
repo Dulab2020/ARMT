@@ -434,22 +434,56 @@ app_server <- function( input, output, session ) {
     }
     else{shinyjs::hide('keggShow')}
   })
+  #相关性分析动态UI
+  output$corActiveUI <- renderUI({
+    if(!is.null(input$groupInfo)){
+      #分组UI
+      if(input$groupInfo != 'No group'){
+        allGroup <- table(factor(newClinalData()[[input$groupInfo]]))
+        fluidPage(
+          selectInput('groupCorFactor', 'Single factor for group correlation:', choices = c('All', input$corFactor1)),
+          selectInput('corGroup', 'Show Group:', choices = names(allGroup[allGroup > 3]))
+        )
+      }
+      #不分组UI
+      else{NULL}
+    }
+    else{NULL}
+  })
+  observeEvent(input$groupCorFactor,{
+    if(input$groupCorFactor == 'All'){shinyjs::show('corGroup')}
+    else{shinyjs::hide('corGroup')}
+  })
   #相关性分析
   corResult <- eventReactive(input$calCor, {
     if(!is.null(input$corFactor1)){
-      if(!is.null(input$corFactor2)){corCal(newClinalData(), input$corFactor1, input$corFactor2, input$corWay)}
-      else{corCal(newClinalData(), input$corFactor1, input$corFactor1, input$corWay)}           
+      if(!is.null(input$corFactor2)){corCal(newClinalData(), input$corFactor1, input$corFactor2, input$corWay, input$groupInfo, input$groupCorFactor)}
+      else{corCal(newClinalData(), input$corFactor1, input$corFactor1, input$corWay, input$groupInfo, input$groupCorFactor)}            
     }
   })
   corMatResult <- reactive({
     if(!is.null(corResult())){
-      corResult()$mat
+      if(!is.null(input$groupCorFactor)){
+        if('All'%in%names(corResult())){
+          #分组全比较
+          if(input$groupCorFactor == 'All'){
+            corResult()[[input$groupCorFactor]]$mat[[input$corGroup]]
+          }
+          #分组单因子比较
+          else{corResult()[[input$groupCorFactor]]$mat}
+        }
+        #不分组
+        else{corResult()$mat}
+      }
+      #初始状态不分组
+      else{corResult()$mat}
     }
     else{NULL}
   })
   corLsResult <- reactive({
     if(!is.null(corResult())){
-      corRe <- corResult()$ls
+      if(isolate(input$groupInfo) =='No group'){corRe <- corResult()$ls}
+      else{corRe <- corResult()[[input$groupCorFactor]]$ls}
       corRe <- corRe[abs(corRe$r) >= input$corrCut,,drop = FALSE]
       corRe <- corRe[corRe$p <= input$corpCut,,drop = FALSE]
       corRe
@@ -460,20 +494,26 @@ app_server <- function( input, output, session ) {
   output$corLsShow <- DT::renderDT(corLsResult())
   output$corHeat <- renderPlot({
     corHeatMat <- corMatResult()
-    corHeatMat <- corMatScreen(corHeatMat, corResult()$ls, input$corrCut, input$corpCut)
+    if('All'%in%names(corResult())){
+      corScr <- corResult()[[input$groupCorFactor]]$ls
+      if(length(colnames(corScr)) == 5){corScr <- corScr[corScr[[input$groupInfo]] == input$corGroup, , drop =FALSE]}
+    }
+    else{corScr <- corResult()$ls}
+    corHeatMat <- corMatScreen(corHeatMat, corScr, input$corrCut, input$corpCut)
     plotHeat(corHeatMat)
   })
   output$corShow <- renderUI({
     if(!is.null(corMatResult())){
       shinyjs::show('corShow')
-      fluidPage(h2('Correlation Matrix'),
-                DT::DTOutput('corMatShow'),
-                downloadButton('getCorMat', 'Save'),
-                hr(),
-                DT::DTOutput('corLsShow'),
-                downloadButton('getCorLs', 'Save'),
-                hr(),
-                plotOutput('corHeat')
+      fluidPage(
+        h2('Correlation Matrix'),
+        DT::DTOutput('corMatShow'),
+        downloadButton('getCorMat', 'Save'),
+        hr(),
+        DT::DTOutput('corLsShow'),
+        downloadButton('getCorLs', 'Save'),
+        hr(),                                                                         
+        plotOutput('corHeat')
       )
     }
     else{shinyjs::hide('corShow')}

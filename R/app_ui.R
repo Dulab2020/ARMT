@@ -173,6 +173,7 @@ app_ui <- function(request) {
                                         uiOutput('chooseCorFactor2'),
                                         selectInput('corWay', 'Correlation Coefficient:', choices = c('Spearman'= 'spearman', 'Pearson' = 'pearson')),
                                         actionButton('calCor', 'Calculate'),
+                                        uiOutput('corActiveUI'),
                                         sliderInput('corrCut', 'r Cut Off:', min = 0, max = 1, value = 0),
                                         sliderInput('corpCut', 'p Cut Off:', min = 0, max = 1, value = 1)
                                       ),

@@ -451,18 +451,64 @@ plotDot <- function(data, eway, showNum = 5){
 }
 
 #相关系数
-corCal <- function(data, x, y, way, group = FALSE){
-  if(!group){
-    corRe <- corr.test(data[x], data[y], method = way, adjust = 'fdr')
+corCal <- function(data, x, y, way, group = 'No group', singleFac = 'All'){
+  #基本求相关函数
+  corCalculation <- function(dataIn){
+    corResult <- corr.test(dataIn[x], dataIn[y], method = way, adjust = 'fdr')
     rN <- NULL
     for(i in y){
       rN <- c(rN, paste(x,i,sep = '-'))
     }
-    result2 <- corRe$ci
-    row.names(result2) <- rN
-    result1 <- as.data.frame(corRe$r)
-    return(list(mat = result1, ls = result2))
+    re2 <- corResult$ci
+    row.names(re2) <- rN
+    re1 <- as.data.frame(corResult$r)
+    return(list(Mat = re1, Ls = re2))
   }
+  #不分组
+  if(group == 'No group'){
+    result <- list()
+    corRe <- corCalculation(dataIn = data)
+    result$mat <- corRe$Mat
+    result$ls <- corRe$Ls
+  }
+  #分组
+  else{
+    groupList <- levels(factor(data[[group]]))
+    result <- list()
+    #多组单对多
+    for(singleFac in  x){
+      Mat<-data.frame()
+      Ls<-data.frame()
+      for(t in groupList){
+        if(length(data[data[[group]] == t,1])<=3){next}
+        oneResult <- corr.test(data[data[[group]] == t, singleFac, drop = FALSE],
+                               data[data[[group]] == t, y, drop = FALSE],
+                               method = way, adjust = 'fdr')
+        row.names(oneResult$r)<-t
+        Mat <- rbind(Mat, as.data.frame(oneResult$r))
+        rN <- NULL
+        for(i in y){
+          rN <- c(rN, paste(t,i,sep = '-'))
+        }
+        oneLs <- oneResult$ci
+        row.names(oneLs) <- rN
+        Ls <- rbind(Ls, oneLs)
+      }
+      result[[singleFac]] <- list(mat = Mat, ls = Ls)
+    }
+    #多组比较
+    multiMat <- list()
+    multiLs <- data.frame()
+    for(k in groupList){
+      if(length(data[data[[group]] == k,1])<=3){next}
+      oneResult <- corCalculation(data[data[[group]] == k,])
+      multiMat[[k]] <- oneResult$Mat
+      oneResult$Ls[[group]] <- k
+      multiLs <- rbind(multiLs, oneResult$Ls)
+    }
+    result$All <- list(mat = multiMat, ls = multiLs)
+  }
+  return(result)
 }
 
 #相关系数矩阵筛选
@@ -477,6 +523,7 @@ corMatScreen <- function(data, scrData, rcut, pcut){
 
 #热图
 plotHeat <- function(data){
+  if(is.null(data)){return(NULL)}
   pHeat <- ggcorrplot(data)
   return(pHeat)
 }
