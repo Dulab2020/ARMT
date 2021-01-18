@@ -219,8 +219,13 @@ multipleCox <- function(data, survivaltime, sta, factable){
 
 #Cox结果提炼
 getCoxTable <- function(data){
-  result <- as.data.frame(merge(data$coefficients,data$conf.int), drop=FALSE)
-  row.names(result) <- row.names(data$coefficients)
+  a<- as.data.frame(data$coefficients)
+  b <- as.data.frame(data$conf.int)
+  a = a[c(2,1,3,4, 5)]
+  b = b[-1]
+  result = merge(a, b, by = "row.names")
+  row.names(result) <- result[,1]
+  result <- result[,-1]
   result$sample_number <- data$sample_n
   names(result)[names(result) == 'exp(coef)'] <- 'HR'
   names(result)[names(result) == 'Pr(>|z|)'] <- 'P-Value'
