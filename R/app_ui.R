@@ -146,6 +146,7 @@ app_ui <- function(request) {
                                                  column(width = 6, uiOutput('chooseControl'))
                                         ),
                                         actionButton('calDiffer', 'Calculate'),
+                                        uiOutput('deaGroupUI'),
                                         sliderInput('logFCCutOff', 'logFC cut off:', min = 0, max = 2, value = 1, step = 0.01),
                                         sliderInput('pCutOff', 'P-value cut off:', min = 0, max = 1, value = 0.05, step = 0.01),
                                         sliderInput('fdrCutOff', 'FDR(or adj.P) cut off:', min = 0, max = 1, value = 0.02, step = 0.01),

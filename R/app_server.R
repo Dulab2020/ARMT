@@ -250,10 +250,12 @@ app_server <- function( input, output, session ) {
       factorDea <- levels(as.factor(temp))
       output$chooseExperience <- renderUI(selectInput('exGroup','Experience group', choices = factorDea))
       output$chooseControl <- renderUI(selectInput('ctGroup','Control group', choices = factorDea))
+      shinyjs::hide('groupCutOff')
       shinyjs::show('exGroup')
       shinyjs::show('ctGroup')
     }
     else{
+      shinyjs::show('groupCutOff')
       shinyjs::hide('exGroup')
       shinyjs::hide('ctGroup')
     }
@@ -261,66 +263,118 @@ app_server <- function( input, output, session ) {
   deaObj <- reactive({if(input$deaWay == 'maf'){read.maf(input$deaData$datapath, isTCGA = input$deaTCGAFlag)}
     else{readMatrix(input$deaData)}
   })
+  #差异分析的condit分组
+  deaGroupList <- reactive({
+    if(!is.null(input$groupInfo)){
+      if(input$groupInfo == 'No group'){NULL}
+      else{levels(as.factor(newClinalData()[[input$groupInfo]]))}
+    }
+    else{NULL}
+  })
+  output$deaGroupUI <- renderUI({
+    if(!is.null(input$groupInfo)){
+      if(input$groupInfo == 'No group'){NULL}
+      else{selectInput('deaOutGroup', 'Choose a group to out put:', choices = names(deaResult()))}
+    }
+    else{NULL}
+  })
   #差异分析
   deaResult <- eventReactive(input$calDiffer,{
     if(!is.null(deaObj())){
-      groupCondit <- newClinalData()[input$deaFactor]
-      if(is.numeric(groupCondit[,1])){
-        groupCondit[,1] <- seriesToDiscrete(groupCondit[,1], input$groupCutOff)
-        ex <- 'High'
-        ct <- 'Low'
-      }
+      #无分组计算
+      if(input$groupInfo == 'No group'){
+        groupCondit <- newClinalData()[input$deaFactor]
+        if(is.numeric(groupCondit[,1])){
+          groupCondit[,1] <- seriesToDiscrete(groupCondit[,1], input$groupCutOff)
+          ex <- 'High'
+          ct <- 'Low'
+        }
+        else{
+          ex <- input$exGroup
+          ct <- input$ctGroup
+        }
+        if(input$deaWay == 'edg'){
+          transferID(deaEdgeR(deaObj(), groupCondit, ex, ct))
+        }
+        else if(input$deaWay == 'lm'){
+          deaLimma(deaObj(), groupCondit, ex, ct)
+        }
+        else if(input$deaWay == 'maf'){
+          mafDiffer(deaObj(), groupCondit, ex, ct)
+        }
+        else{print('?')}
+      }   
+      #分组计算
       else{
-        ex <- input$exGroup
-        ct <- input$ctGroup
+        resultDea <- list()
+        clin <- newClinalData()
+        for(q in deaGroupList()){
+          groupCondit <- clin[clin[input$groupInfo] == q, ][input$deaFactor]
+          if(is.numeric(groupCondit[,1])){
+            groupCondit[,1] <- seriesToDiscrete(groupCondit[,1], input$groupCutOff)
+            ex <- 'High'
+            ct <- 'Low'
+          }
+          else{
+            ex <- input$exGroup
+            ct <- input$ctGroup
+          }
+          if(input$deaWay == 'edg'){
+            resultDea[[q]] <- transferID(deaEdgeR(deaObj(), groupCondit, ex, ct))
+          }
+          else if(input$deaWay == 'lm'){
+            resultDea[[q]] <- deaLimma(deaObj(), groupCondit, ex, ct)
+          }
+          else if(input$deaWay == 'maf'){
+            resultDea[[q]] <- mafDiffer(deaObj(), groupCondit, ex, ct)
+          }
+          else{print('?')}
+        }
+        resultDea
       }
-      if(input$deaWay == 'edg'){
-        transferID(deaEdgeR(deaObj(), groupCondit, ex, ct))
-      }
-      else if(input$deaWay == 'lm'){
-        deaLimma(deaObj(), groupCondit, ex, ct)
-      }
-      else if(input$deaWay == 'maf'){
-        mafDiffer(deaObj(), groupCondit, ex, ct)
-      }
-      else{print('?')}
-    }
+    }   
   })
   deaScreen <- reactive({
+    wayDea <- isolate(input$deaWay)
     if(!is.null(deaResult())){
-      if(input$deaWay == 'edg'){
-        differResult <- deaResult()[deaResult()$PValue <= input$pCutOff, , drop = FALSE]
+      if(!is.data.frame(deaResult())){
+        if(all(names(deaResult()) == c('results', 'SampleSummary'))){deaToPrint <- deaResult()}
+        else{deaToPrint <- deaResult()[[input$deaOutGroup]]}
+      }
+      else{deaToPrint <- deaResult()}
+      if(wayDea == 'edg'){
+        differResult <- deaToPrint[deaToPrint$PValue <= input$pCutOff, , drop = FALSE]
         differResult <- differResult[differResult$FDR <= input$fdrCutOff, , drop = FALSE]
       }
-      else if(input$deaWay == 'lm'){
-        differResult <- deaResult()[deaResult()$P.Value <= input$pCutOff, , drop = FALSE]
+      else if(wayDea == 'lm'){
+        differResult <- deaToPrint[deaToPrint$P.Value <= input$pCutOff, , drop = FALSE]
         differResult <- differResult[differResult$adj.P.Val <= input$fdrCutOff, , drop = FALSE]
       }
-      else if(input$deaWay == 'maf'){
-        differResult <- deaResult()$results
+      else if(wayDea == 'maf'){
+        differResult <- deaToPrint$results
         differResult <- differResult[differResult$pval <= input$pCutOff, , drop = FALSE]
         differResult <- differResult[differResult$adjPval <= input$fdrCutOff, , drop = FALSE]
       }
       #logFC过滤没maf差异的份
-      if(input$deaWay != 'maf'){
+      if(wayDea != 'maf'){
         if(input$logFCCutOff == 0)
         {differResult$Status <- cut(differResult$logFC, c(-Inf, input$logFCCutOff, Inf), c('Down','Up'))}
         else
         {differResult$Status <- cut(differResult$logFC, c(-Inf, -input$logFCCutOff, input$logFCCutOff, Inf), c('Down','None','Up'))}
       }
-      if(input$deaWay == 'edg'){
+      if(wayDea == 'edg'){
         output$volcanoPicture <- renderPlot(plotVolcano(differResult))
         shinyjs::show('volcanoPicture')
       }
       #maf的图借用火山图的output通道
-      else if(input$deaWay == 'maf'){
-        output$volcanoPicture <- renderPlot(forestPlot(deaResult(), 
+      else if(wayDea == 'maf'){
+        output$volcanoPicture <- renderPlot(forestPlot(deaToPrint, 
                                                        pVal = input$pCutOff,
                                                        fdr = input$fdrCutOff))
         shinyjs::show('volcanoPicture')
       }
       else{shinyjs::hide('volcanoPicture')}
-      if(input$deaWay != 'maf'){
+      if(wayDea != 'maf'){
         differResult[any(differResult$Status == 'Up', differResult$Status == 'Down'), , drop = FALSE]
       }
       else{differResult}
