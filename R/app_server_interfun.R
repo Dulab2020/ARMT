@@ -26,7 +26,7 @@ allCancer <- levels(factor(interClinical$type))
 readMatrix <- function(csvPath, rowFlag = TRUE){
     if (is.null(csvPath))
       return(NULL)
-    getread <- fread(csvPath$datapath, na.strings = NULL, check.name = FALSE, data.table = FALSE, stringsAsFactors = FALSE)
+    getread <- fread(csvPath$datapath, na.strings = c("", getOption("datatable.na.strings","NA")), check.name = FALSE, data.table = FALSE, stringsAsFactors = FALSE)
     if(rowFlag){
       rownames(getread) <- getread[,1]
       getread <- getread[,-1, drop = FALSE]

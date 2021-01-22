@@ -171,23 +171,64 @@ app_server <- function( input, output, session ) {
   output$chooseDeaFactor <- renderUI(selectInput('deaFactor', label = 'Group by: ', choices = colnames(newClinalData())))
   output$chooseCorFactor1 <- renderUI(selectInput('corFactor1', 'Factor1:', choices = colnames(newClinalData()), multiple = TRUE))
   output$chooseCorFactor2 <- renderUI(selectInput('corFactor2', 'Factor2:', choices = colnames(newClinalData()), multiple = TRUE))
+  #cox参考组的UI
+  observe({
+    fL <- input$surFactor
+    if(is.null(fL)){quoteExpr<-quote(NULL)}
+    else{
+      quoteExpr <- quote(fluidPage)
+      for(t in input$surFactor){
+        if(!is.numeric(newClinalData()[[t]])){
+          quoteExpr <- append(quoteExpr,
+                              bquote(
+                                selectInput(paste0(.(t),'Ref'), paste(.(t), 'reference'), choices = levels(as.factor(newClinalData()[[.(t)]])))
+                              )
+          )
+        }
+      }
+      quoteExpr <- as.call(quoteExpr)
+      if(quoteExpr == quote(fluidPage)){quoteExpr <- quote(NULL)}
+    }
+    output$coxRefUI <- renderUI(quoteExpr, quoted = TRUE)
+  })
+  observe({
+    if(input$surWay == 'sur'){shinyjs::hide('coxRefUI')}
+    else{shinyjs::show('coxRefUI')}
+  })
+  output$surGroupUI <- renderUI({
+    if(!is.null(input$groupInfo)){
+      if(input$groupInfo == 'No group'){NULL}
+      else{selectInput('surGroup', 'Choose a group:', choices = levels(factor(newClinalData()[[input$groupInfo]])))} 
+    }
+  })
   #生存分析计算矩阵
   surClin <- reactive({
+    factorList <- input$surFactor
     if(!is.null(newClinalData())){
       if(!is.numeric(newClinalData()[,input$surSta])){
         factorSta <- tolower(levels(as.factor(newClinalData()[,input$surSta])))
         if(any(all(factorSta == c('alive','dead')), all(factorSta == c('dead','alive')))){
           shinyjs::hide('deadEvent')
-          toSurStatus(newClinalData(), input$surSta, 'dead')
+          tempSurClin <- toSurStatus(newClinalData(), input$surSta, 'dead')
         }
         else{
           output$chooseEvent <- renderUI(selectInput('deadEvent', 'Input the dead event: ', choices = factorSta))
           shinyjs::show('deadEvent')
-          toSurStatus(newClinalData(), input$surSta, input$deadEvent)
+          tempSurClin <- toSurStatus(newClinalData(), input$surSta, input$deadEvent)
         }
       }
       else{shinyjs::hide('deadEvent')
-        newClinalData()}
+        tempSurClin <- newClinalData()}
+      #设置因子水平
+      for (f in factorList){
+        facRef <- input[[paste0(f,'Ref')]]
+        if(!is.null(facRef)){
+          tempSurClin[[f]] <- relevel(factor(tempSurClin[[f]]), ref = facRef)
+        }
+      }
+      #选组
+      if(!is.null(input$surGroup)){tempSurClin <- tempSurClin[tempSurClin[[input$groupInfo]] == input$surGroup, , drop = FALSE]}
+      tempSurClin
     }
   })
   output$showtest <- DT::renderDT({

@@ -120,7 +120,9 @@ app_ui <- function(request) {
                                                sidebarPanel(
                                                  selectInput('surWay', 'Choose your calculate way:', choices = 
                                                                c('Survival' = 'sur', 'Single Cox' = 'singleCox', 'Multiple Cox' = 'multipleCox')),
+                                                 uiOutput('surGroupUI'),
                                                  uiOutput('chooseSurFactor'),
+                                                 uiOutput('coxRefUI'),
                                                  uiOutput('chooseEvent'),
                                                  actionButton('calSur', 'Calculate')
                                                ), 
