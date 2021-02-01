@@ -169,7 +169,7 @@ surAnalysis <- function(data, survivaltime, sta, t){
   f<<-as.formula(paste0('s','~',t))
   fit<-survfit(f[0:3], data=data)
   names(fit$strata) <- sub(t, ort, names(fit$strata))
-  suppressMessages(surplot <- ggsurvplot(fit = fit, data = data,  legend.title=t, palette=c("#F95006", "#33484C"),pval = TRUE,surv.median.line = "hv", legend = c(0.7, 0.95)))
+  suppressMessages(surplot <- ggsurvplot(fit = fit, data = data,  legend.title=t, palette=c("#F95006", "#33484C"),pval = TRUE,surv.median.line = "hv", legend = c(0.7, 0.8)))
   remove(f, envir = parent.env(environment()))
   remove(s, envir = parent.env(environment()))
   #suppressMessages(ggsave(paste0(t,'.pdf'),plot=print(surplot),path= outpath,width=8, height=8))
