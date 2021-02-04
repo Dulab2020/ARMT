@@ -186,8 +186,8 @@ app_server <- function( input, output, session ) {
           )
         }
       }
-      quoteExpr <- as.call(quoteExpr)
-      if(quoteExpr == quote(fluidPage)){quoteExpr <- quote(NULL)}
+      if(all(quoteExpr == quote(fluidPage))){quoteExpr <- quote(NULL)}
+      else{quoteExpr <- as.call(quoteExpr)}
     }
     output$coxRefUI <- renderUI(quoteExpr, quoted = TRUE)
   })
@@ -395,6 +395,7 @@ app_server <- function( input, output, session ) {
         differResult <- deaToPrint$results
         differResult <- differResult[differResult$pval <= input$pCutOff, , drop = FALSE]
         differResult <- differResult[differResult$adjPval <= input$fdrCutOff, , drop = FALSE]
+        deaToPrint$results <- differResult
       }
       #logFC过滤没maf差异的份
       if(wayDea != 'maf'){
@@ -405,13 +406,15 @@ app_server <- function( input, output, session ) {
       }
       if(wayDea == 'edg'){
         output$volcanoPicture <- renderPlot(plotVolcano(differResult))
+        output$volcanoPictureUI <- renderUI(plotOutput('volcanoPicture'))
         shinyjs::show('volcanoPicture')
       }
       #maf的图借用火山图的output通道
       else if(wayDea == 'maf'){
         output$volcanoPicture <- renderPlot(forestPlot(deaToPrint, 
-                                                       pVal = input$pCutOff,
-                                                       fdr = input$fdrCutOff))
+                                                       pVal = input$pCutOff),
+                                            height = 100+20*length(row.names(differResult)))
+        output$volcanoPictureUI <- renderUI(plotOutput('volcanoPicture', height = 100+20*length(row.names(differResult))))
         shinyjs::show('volcanoPicture')
       }
       else{shinyjs::hide('volcanoPicture')}

@@ -162,7 +162,7 @@ app_ui <- function(request) {
                                       ),
                                       mainPanel(
                                         uiOutput('showDea'),
-                                        plotOutput('volcanoPicture'),
+                                        uiOutput('volcanoPictureUI'),
                                         hr(),
                                         uiOutput('goShow'),
                                         uiOutput('keggShow')
