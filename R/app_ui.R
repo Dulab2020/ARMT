@@ -163,8 +163,11 @@ app_ui <- function(request) {
                                       mainPanel(
                                         uiOutput('showDea'),
                                         uiOutput('volcanoPictureUI'),
+                                        downloadButton('volcanoSave', 'Save(.pdf)'), #火山图下载代码放在deaScreen中
                                         hr(),
+                                        uiOutput('goHead'), #GO结果设置以及标题
                                         uiOutput('goShow'),
+                                        uiOutput('keggHead'), #KEGG结果设置以及标题
                                         uiOutput('keggShow')
                                       )
                                     )),
@@ -180,7 +183,10 @@ app_ui <- function(request) {
                                         sliderInput('corrCut', 'r Cut Off:', min = 0, max = 1, value = 0),
                                         sliderInput('corpCut', 'p Cut Off:', min = 0, max = 1, value = 1)
                                       ),
-                                      mainPanel(uiOutput('corShow'))
+                                      mainPanel(
+                                        uiOutput('corShow'),
+                                        sliderInput('heatSize', 'Heatmap Size:', min = 10, max = 100, value = 20),
+                                        uiOutput('corHeatShow'))
                                     ))
                                   ))
                          ),

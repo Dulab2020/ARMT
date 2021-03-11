@@ -237,6 +237,7 @@ getCoxTable <- function(data){
 #自制森林图
 diyForest <- function(data){
   data$factor <- row.names(data)
+  data$factor <- factor(data$factor, levels = data$factor) #保持画图的因子顺序
   data$up95 <- round(data$up95, 2)
   data$low95 <- round(data$low95, 2)
   data$HR <- round(data$HR, 2)
@@ -346,11 +347,17 @@ deaLimma <- function(df, condition, h, control){
 
 #maf差异分析
 mafDiffer <- function(mafIndata, condition, h, control){
+  pr <- Progress$new(min=1, max=4)
+  on.exit(pr$close())
+  pr$set(message = 'Calculating difference in cohort:',detail = 'This may take a while...', value = 1)
   mafEx <- subsetMaf(mafIndata, tsb = row.names(condition[condition[,1] == h, ,drop = FALSE]))
+  pr$set(value = 2)
   mafCt <- subsetMaf(mafIndata, tsb = row.names(condition[condition[,1] == control, ,drop = FALSE]))
+  pr$set(value = 3)
   result <- mafCompare(mafEx, mafCt, 
                        m1Name = paste(colnames(condition), h, sep = ':'),
                        m2Name = paste(colnames(condition), control, sep = ':'))
+  pr$set(value = 4)
   return(result)
 }
 
@@ -444,7 +451,7 @@ plotBar <- function(data, eway, showNum = 5){
 plotDot <- function(data, eway, showNum = 5){
   if(eway == 'GO'){
     if('ONTOLOGY' %in% colnames(data@result)){
-      pout <- barplot(data, split="ONTOLOGY",showCategory=showNum)+
+      pout <- dotplot(data, split="ONTOLOGY",showCategory=showNum)+
         facet_grid(ONTOLOGY~., scale="free")
     }
     else{pout <- dotplot(data,showCategory=showNum)}

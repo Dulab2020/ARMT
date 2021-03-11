@@ -260,6 +260,7 @@ app_server <- function( input, output, session ) {
       getCoxTable(multipleCox(surClin(), input$surTime, input$surSta, input$surFactor))
     }
   })
+  coxForest <- reactive(diyForest(surResult()))
   output$surShow <- renderUI({
     if(!is.null(surResult())){
       if(isolate(input$surWay) == 'sur'){
@@ -268,23 +269,32 @@ app_server <- function( input, output, session ) {
                                      width = ceiling(sqrt(length(isolate(input$surFactor))))*input$surPlotSize,
                                      height = round(sqrt(length(isolate(input$surFactor))))*input$surPlotSize)
         shinyjs::show('surPlotSize')
-        plotOutput('surPlot', height = round(sqrt(length(isolate(input$surFactor))))*input$surPlotSize)
+        fluidRow(
+          plotOutput('surPlot', height = round(sqrt(length(isolate(input$surFactor))))*input$surPlotSize),
+          downloadButton('surPlotSave', 'Save(.pdf)') 
+        )
       }
       else{
         shinyjs::hide('surPlotSize')
         output$singleCoxShow <- DT::renderDT(surResult())
-        output$singleCoxForest <- renderPlot(diyForest(surResult()),
+        output$singleCoxForest <- renderPlot(coxForest(),
                                              width = input$forestSize,
                                              height = 100+20*nrow(surResult()))
         shinyjs::show('forestSize')
         fluidRow(plotOutput('singleCoxForest', height = 100+20*nrow(surResult())),
                  br(),
-                 DT::DTOutput('singleCoxShow'))
+                 downloadButton('coxForestSave', 'Save(.pdf)'),
+                 hr(),
+                 DT::DTOutput('singleCoxShow'),
+                 br(),
+                 downloadButton('coxResultSave', 'Save')
+        )
       }
     }
     else{NULL}
   })
   #差异分析动态UI
+  observe(if(input$calDiffer == 0){shinyjs::hide('volcanoSave')})#初始化隐藏火山图下载按钮
   observe({
     temp <- tryCatch(newClinalData()[,input$deaFactor], error = function(x){NULL})
     if(!is.numeric(temp)){
@@ -301,7 +311,14 @@ app_server <- function( input, output, session ) {
       shinyjs::hide('ctGroup')
     }
   })
-  deaObj <- reactive({if(input$deaWay == 'maf'){read.maf(input$deaData$datapath, isTCGA = input$deaTCGAFlag)}
+  deaObj <- reactive({if(input$deaWay == 'maf'){
+    prReadmaf <- Progress$new(min=0, max=2)
+    on.exit(prReadmaf$close())
+    prReadmaf$set(message = 'Reading maf file',detail = 'This may take a while...', value = 1)
+    mafToDea <- read.maf(input$deaData$datapath, isTCGA = input$deaTCGAFlag)
+    prReadmaf$set(value = 2)
+    mafToDea
+  }
     else{readMatrix(input$deaData)}
   })
   #差异分析的condit分组
@@ -390,6 +407,8 @@ app_server <- function( input, output, session ) {
       else if(wayDea == 'lm'){
         differResult <- deaToPrint[deaToPrint$P.Value <= input$pCutOff, , drop = FALSE]
         differResult <- differResult[differResult$adj.P.Val <= input$fdrCutOff, , drop = FALSE]
+        shinyjs::hide('volcanoPicture')
+        shinyjs::hide('volcanoSave')
       }
       else if(wayDea == 'maf'){
         differResult <- deaToPrint$results
@@ -405,17 +424,28 @@ app_server <- function( input, output, session ) {
         {differResult$Status <- cut(differResult$logFC, c(-Inf, -input$logFCCutOff, input$logFCCutOff, Inf), c('Down','None','Up'))}
       }
       if(wayDea == 'edg'){
-        output$volcanoPicture <- renderPlot(plotVolcano(differResult))
+        deaVolcano <- reactive(plotVolcano(differResult))
+        output$volcanoPicture <- renderPlot(deaVolcano())
         output$volcanoPictureUI <- renderUI(plotOutput('volcanoPicture'))
+        output$volcanoSave <- downloadHandler(filename = function(){paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_volcano.pdf', sep='')},
+                                              content = function(file){ggsave(file, plot = deaVolcano(), device = 'pdf', dpi = 600)},
+                                              contentType = 'pdf')   #火山图输出在这儿
         shinyjs::show('volcanoPicture')
+        shinyjs::show('volcanoSave')
       }
       #maf的图借用火山图的output通道
       else if(wayDea == 'maf'){
-        output$volcanoPicture <- renderPlot(forestPlot(deaToPrint, 
-                                                       pVal = input$pCutOff),
-                                            height = 100+20*length(row.names(differResult)))
-        output$volcanoPictureUI <- renderUI(plotOutput('volcanoPicture', height = 100+20*length(row.names(differResult))))
+        deaToPrint$results <- differResult #改完参数过滤后再画图
+        plNum <- nrow(deaToPrint$results)  #输出基因的数量
+        output$volcanoPicture <- renderPlot(forestPlot(deaToPrint,pVal = 1.1))
+        output$volcanoPictureUI <- renderUI(plotOutput('volcanoPicture', width = '8in', height = paste0(4.65+0.15*plNum, 'in')))
+        output$volcanoSave <- downloadHandler(filename = function(){paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_mafdeaforest.pdf', sep='')},
+                                              content = function(file){pdf(file, width = 8, height = 4.65+0.15*plNum)
+                                                forestPlot(deaToPrint, pVal = 1.1)
+                                                dev.off()},
+                                              contentType = 'pdf')  #森林图输出在这
         shinyjs::show('volcanoPicture')
+        shinyjs::show('volcanoSave')
       }
       else{shinyjs::hide('volcanoPicture')}
       if(wayDea != 'maf'){
@@ -425,6 +455,7 @@ app_server <- function( input, output, session ) {
     }
     else{
       shinyjs::hide('volcanoPicture')
+      shinyjs::hide('volcanoSave')
       NULL}
   })
   output$showDea <- renderUI({
@@ -468,34 +499,87 @@ app_server <- function( input, output, session ) {
     keggProgress$set(value = 4)
     list(up = keggUp, down = keggDown, all = keggAll)
   })
+  
+  goDotUp <- reactive(plotDot(goResult()$up[[2]], 'GO', input$goShowNum))
+  goBarUp <- reactive(plotBar(goResult()$up[[2]], 'GO', input$goShowNum))
+  
+  goDotDown <- reactive(plotDot(goResult()$down[[2]], 'GO', input$goShowNum))
+  goBarDown <- reactive(plotBar(goResult()$down[[2]], 'GO', input$goShowNum))
+  
+  goDotAll <- reactive(plotDot(goResult()$all[[2]], 'GO', input$goShowNum))
+  goBarAll <- reactive(plotBar(goResult()$all[[2]], 'GO', input$goShowNum))
+  
+  keggDotUp <- reactive(plotDot(keggResult()$up[[2]], 'KEGG', input$keggShowNum))
+  keggBarUp <- reactive(plotBar(keggResult()$up[[2]], 'KEGG', input$keggShowNum))
+  
+  keggDotDown <- reactive(plotDot(keggResult()$down[[2]], 'KEGG', input$keggShowNum))
+  keggBarDown <- reactive(plotBar(keggResult()$down[[2]], 'KEGG', input$keggShowNum))
+  
+  keggDotAll <- reactive(plotDot(keggResult()$all[[2]], 'KEGG', input$keggShowNum))
+  keggBarAll <- reactive(plotBar(keggResult()$all[[2]], 'KEGG', input$keggShowNum))
+  
+  goHeight <- reactive({
+    if(is.null(input$goShowNum)){n <- 5}
+    else{n <- input$goShowNum}
+    if(input$enrichOnto == 'ALL'){120+3*n*20}
+    else{if(n<=8){280}
+      else{280 + (n-8)*20}}  
+  })  #GO图高度
+  keggHeight <- reactive({
+    if(is.null(input$keggShowNum)){n <- 5}
+    else{n <- input$keggShowNum}
+    if(n<=8){280}
+    else{280 + (n-8)*20}}) #KEGG图高度
+  output$goHead <- renderUI({
+    if(!is.null(goResult())){
+      fluidRow(h2('GO Result'),
+               numericInput('goShowNum', 'Show Number:', min = 3, max = 20, value = 5))
+    }
+    else{NULL}
+  }) #GO结果设置及标题
+  output$keggHead <- renderUI({
+    if(!is.null(keggResult())){
+      fluidRow(h2('KEGG Result'),
+               numericInput('keggShowNum', 'Show Number:', min = 3, max = 20, value = 5))
+    }
+    else{NULL}
+  }) #KEGG结果设置及标题
   output$goShow <- renderUI({
     if(!is.null(goResult())){
       shinyjs::show('goShow')
       output$goShowMatrixUp <- DT::renderDT(goResult()$up[[1]], options=list(pageLength = 2))
       output$goShowMatrixDown <- DT::renderDT(goResult()$down[[1]], options=list(pageLength = 2))
       output$goShowMatrixAll <- DT::renderDT(goResult()$all[[1]], options=list(pageLength = 2))
-      output$goShowDotUp <- renderPlot(plotDot(goResult()$up[[2]], 'GO', input$goShowNum))
-      output$goShowDotDown <- renderPlot(plotDot(goResult()$down[[2]], 'GO', input$goShowNum))
-      output$goShowDotAll <- renderPlot(plotDot(goResult()$all[[2]], 'GO', input$goShowNum))
-      output$goShowBarUp <- renderPlot(plotBar(goResult()$up[[2]], 'GO', input$goShowNum))
-      output$goShowBarDown <- renderPlot(plotBar(goResult()$down[[2]], 'GO', input$goShowNum))
-      output$goShowBarAll <- renderPlot(plotBar(goResult()$all[[2]], 'GO', input$goShowNum))
-      fluidRow(h2('GO Result'),
-               numericInput('goShowNum', 'Show Number', min = 3, max = 20, value = 5),
-               tabsetPanel(
-                 tabPanel('Up', DT::DTOutput('goShowMatrixUp'),
-                          downloadButton('getGOMatrixUp', 'Save'),
-                          plotOutput('goShowDotUp'), 
-                          plotOutput('goShowBarUp')),
-                 tabPanel('Down', DT::DTOutput('goShowMatrixDown'),
-                          downloadButton('getGOMatrixDown', 'Save'),
-                          plotOutput('goShowDotDown'),
-                          plotOutput('goShowBarDown')),
-                 tabPanel('All', DT::DTOutput('goShowMatrixAll'),
-                          downloadButton('getGOMatrixAll', 'Save'),
-                          plotOutput('goShowDotAll'),
-                          plotOutput('goShowBarAll'))
-               )
+      
+      output$goShowDotUp <- renderPlot(goDotUp()) 
+      output$goShowDotDown <- renderPlot(goDotDown())
+      output$goShowDotAll <- renderPlot(goDotAll())
+      
+      output$goShowBarUp <- renderPlot(goBarUp()) 
+      output$goShowBarDown <- renderPlot(goBarDown())
+      output$goShowBarAll <- renderPlot(goBarAll())
+      
+      fluidRow(
+        tabsetPanel(
+          tabPanel('Up', DT::DTOutput('goShowMatrixUp'),
+                   downloadButton('getGOMatrixUp', 'Save'),
+                   plotOutput('goShowDotUp', width = 800, height = goHeight()),
+                   downloadButton('goDotUpSave', 'Save(.pdf)'),
+                   plotOutput('goShowBarUp', width = 800, height = goHeight()),
+                   downloadButton('goBarUpSave', 'Save(.pdf)')),
+          tabPanel('Down', DT::DTOutput('goShowMatrixDown'),
+                   downloadButton('getGOMatrixDown', 'Save'),
+                   plotOutput('goShowDotDown', width = 800, height = goHeight()),
+                   downloadButton('goDotDownSave', 'Save(.pdf)'),
+                   plotOutput('goShowBarDown', width = 800, height = goHeight()),
+                   downloadButton('goBarDownSave', 'Save(.pdf)'),),
+          tabPanel('All', DT::DTOutput('goShowMatrixAll'),
+                   downloadButton('getGOMatrixAll', 'Save'),
+                   plotOutput('goShowDotAll', width = 800, height = goHeight()),
+                   downloadButton('goDotAllSave', 'Save(.pdf)'),
+                   plotOutput('goShowBarAll', width = 800, height = goHeight()),
+                   downloadButton('goBarAllSave', 'Save(.pdf)'),)
+        )
       )    
     }
     else{shinyjs::hide('goShow')}
@@ -506,28 +590,35 @@ app_server <- function( input, output, session ) {
       output$keggShowMatrixUp <- DT::renderDT(keggResult()$up[[1]], options=list(pageLength = 2))
       output$keggShowMatrixDown <- DT::renderDT(keggResult()$down[[1]], options=list(pageLength = 2))
       output$keggShowMatrixAll <- DT::renderDT(keggResult()$all[[1]], options=list(pageLength = 2))
-      output$keggShowDotUp <- renderPlot(plotDot(keggResult()$up[[2]], 'KEGG', input$keggShowNum))
-      output$keggShowDotDown <- renderPlot(plotDot(keggResult()$down[[2]], 'KEGG', input$keggShowNum))
-      output$keggShowDotAll <- renderPlot(plotDot(keggResult()$all[[2]], 'KEGG', input$keggShowNum))
-      output$keggShowBarUp <- renderPlot(plotBar(goResult()$up[[2]], 'KEGG', input$keggShowNum))
-      output$keggShowBarDown <- renderPlot(plotBar(goResult()$down[[2]], 'KEGG', input$keggShowNum))
-      output$keggShowBarAll <- renderPlot(plotBar(goResult()$all[[2]], 'KEGG', input$keggShowNum))
-      fluidRow(h2('KEGG Result'),
-               numericInput('keggShowNum', 'Show Number:', min = 3, max = 20, value = 5),
-               tabsetPanel(
-                 tabPanel('Up', DT::DTOutput('keggShowMatrixUp'),
-                          downloadButton('getKEGGMatrixUp', 'Save'),
-                          plotOutput('keggShowDotUp'),
-                          plotOutput('keggShowBarUp')),
-                 tabPanel('Down', DT::DTOutput('keggShowMatrixDown'),
-                          downloadButton('getKEGGMatrixDown', 'Save'),
-                          plotOutput('keggShowDotDown'),
-                          plotOutput('keggShowBarDown')),
-                 tabPanel('All', DT::DTOutput('keggShowMatrixAll'),
-                          downloadButton('getKEGGMatrixAll', 'Save'),
-                          plotOutput('keggShowDotAll'),
-                          plotOutput('keggShowBarAll'))
-               )
+      
+      output$keggShowDotUp <- renderPlot(keggDotUp()) 
+      output$keggShowDotDown <- renderPlot(keggDotDown())
+      output$keggShowDotAll <- renderPlot(keggDotAll())
+      
+      output$keggShowBarUp <- renderPlot(keggBarUp()) 
+      output$keggShowBarDown <- renderPlot(keggBarDown())
+      output$keggShowBarAll <- renderPlot(keggBarAll())
+      
+      fluidRow(tabsetPanel(
+        tabPanel('Up', DT::DTOutput('keggShowMatrixUp'),
+                 downloadButton('getKEGGMatrixUp', 'Save'),
+                 plotOutput('keggShowDotUp', height = keggHeight()),
+                 downloadButton('keggDotUpSave', 'Save(.pdf)'),
+                 plotOutput('keggShowBarUp', height = keggHeight()),
+                 downloadButton('keggBarUpSave', 'Save(.pdf)')),
+        tabPanel('Down', DT::DTOutput('keggShowMatrixDown'),
+                 downloadButton('getKEGGMatrixDown', 'Save'),
+                 plotOutput('keggShowDotDown', height = keggHeight()),
+                 downloadButton('keggDotDownSave', 'Save(.pdf)'),
+                 plotOutput('keggShowBarDown', height = keggHeight()),
+                 downloadButton('keggBarDownSave', 'Save(.pdf)')),
+        tabPanel('All', DT::DTOutput('keggShowMatrixAll'),
+                 downloadButton('getKEGGMatrixAll', 'Save'),
+                 plotOutput('keggShowDotAll', height = keggHeight()),
+                 downloadButton('keggDotAllSave', 'Save(.pdf)'),
+                 plotOutput('keggShowBarAll', height = keggHeight()),
+                 downloadButton('keggBarAllSave', 'Save(.pdf)'))
+        )
       )    
     }
     else{shinyjs::hide('keggShow')}
@@ -590,7 +681,7 @@ app_server <- function( input, output, session ) {
   })
   output$corMatShow <- DT::renderDT(corMatResult())
   output$corLsShow <- DT::renderDT(corLsResult())
-  output$corHeat <- renderPlot({
+  corHeatMap <- reactive({
     corHeatMat <- corMatResult()
     if('All'%in%names(corResult())){
       corScr <- corResult()[[input$groupCorFactor]]$ls
@@ -600,6 +691,15 @@ app_server <- function( input, output, session ) {
     corHeatMat <- corMatScreen(corHeatMat, corScr, input$corrCut, input$corpCut)
     plotHeat(corHeatMat)
   })
+  heatMapWidth <- reactive({
+    if(is.null(input$heatSize)){n <- 20}
+    else{n <- input$heatSize}
+    150+nrow(corMatResult())*n})
+  heatMapHeight <- reactive({
+    if(is.null(input$heatSize)){n <- 20}
+    else{n <- input$heatSize}
+    150+ncol(corMatResult())*n})
+  output$corHeat <- renderPlot(corHeatMap())
   output$corShow <- renderUI({
     if(!is.null(corMatResult())){
       shinyjs::show('corShow')
@@ -610,11 +710,20 @@ app_server <- function( input, output, session ) {
         hr(),
         DT::DTOutput('corLsShow'),
         downloadButton('getCorLs', 'Save'),
-        hr(),                                                                         
-        plotOutput('corHeat')
+        hr()
       )
     }
     else{shinyjs::hide('corShow')}
+  })
+  output$corHeatShow <- renderUI({
+    if(!is.null(corMatResult())){
+      shinyjs::show('corHeatShow')
+      fluidPage(
+        plotOutput('corHeat', width = heatMapWidth(), height = heatMapHeight()),
+        downloadButton('corHeatSave', 'Save(.pdf)')
+      )
+    }
+    else{shinyjs::hide('corHeatShow')}
   })
   #maf动态UI
   output$mafIn <- renderUI({
@@ -689,22 +798,27 @@ app_server <- function( input, output, session ) {
     #TP53,CDH1,LPR2,MDN1
     else if(input$mafShowMode == 'self'){
       mafMutType <<- input$mafMutationType
-      mafMutGene <- unlist(strsplit(input$mafGene, ','))
+      mafMutGene <<- unlist(strsplit(input$mafGene, ','))
       if(input$mafGeneOrPath == 'Genes'){
-        mafScreen <- subsetMaf(mafTemp, genes = mafMutGene, query = 'Variant_Classification %in% mafMutType')
+        mafScreen <<- subsetMaf(mafTemp, genes = mafMutGene, query = 'Variant_Classification %in% mafMutType')
         output$mafVaf <- renderPlot(plotVaf(maf = mafScreen))
         output$mafSomatic <- renderCachedPlot(somaticInteractions(mafScreen), cacheKeyExpr = {somaticInteractions(mafScreen)})
         output$mafGeneWaterFall <- renderPlot(oncoplot(mafScreen, top = input$mafTop, 
                                                        topBarData = sampleData(),
                                                        rightBarData = genesData(),
-                                                       bgCol = 'white',
-                                                       colors = c('SNP' = 'orange','blue','red', 'INS' = 'green', 'DEL' = 'purple'),
+                                                       bgCol = '#EEEEEE',
+                                                       colors = c('SNP' = '#FE817D', 'INS' = '#45BC9C', 'DEL' = '#FFCD6E', 'orange', 'purple'),
                                                        drawColBar = !is.null(input$topIn),
                                                        drawRowBar = !is.null(input$rightIn),
                                                        sampleOrder = samOrder()))
-        output$mafShow <- renderUI({fluidRow(plotOutput('mafVaf'),
-                                             plotOutput('mafSomatic'),
-                                             plotOutput('mafGeneWaterFall'))})
+        output$mafShow <- renderUI({fluidRow(plotOutput('mafVaf', width = 80+40*length(mafMutGene), height = 500),
+                                             downloadButton('saveVaf', 'Save(.pdf)'),
+                                             hr(),
+                                             column(width = 1, {br()}),column(width = 11, {plotOutput('mafSomatic')}),
+                                             downloadButton('saveMafSomatic', 'Save(.pdf)'),
+                                             hr(),
+                                             plotOutput('mafGeneWaterFall', width = 1000, height = (600+20*(length(mafMutGene)-20)*(length(mafMutGene)>20))),
+                                             downloadButton('saveMafGeneWaterFall', 'Save(.pdf)'))})
       }
       else if(input$mafGeneOrPath == 'Pathway'){
         mafScreen <- subsetMaf(mafTemp, query = 'Variant_Classification %in% mafMutType')
@@ -768,5 +882,197 @@ app_server <- function( input, output, session ) {
     output$getCorLs <- downloadHandler(
       filename = function() { paste(paste(input$corFactor1[[1]],strsplit(input$clinicalData$name, '[.]')[[1]][1],sep = '_'), '_corlist.csv', sep='') },
       content = function(file) {fwrite(corLsResult(), file, row.names = TRUE)})
+    output$corHeatSave <- downloadHandler(
+      filename = function() { paste(paste(input$corFactor1[[1]],strsplit(input$clinicalData$name, '[.]')[[1]][1],sep = '_'), '_corHeatmap.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = corHeatMap(), device = 'pdf', 
+                                       width = heatMapWidth()/2.5,
+                                       height = heatMapHeight()/2.5,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$saveVaf <- downloadHandler(
+      filename = function(){paste(strsplit(input$mafVisual$name, '[.]')[[1]][1], '_vaf.pdf', sep='')},
+      content = function(file){ggsave(file, plot = plotVaf(mafScreen), device = 'pdf',
+                                      width = (80+40*length(mafMutGene))/3,
+                                      height = 500/3,
+                                      unit = 'mm',
+                                      dpi = 600,
+                                      limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$saveMafSomatic <- downloadHandler(
+      filename = function(){paste(strsplit(input$mafVisual$name, '[.]')[[1]][1], '_geneInteraction.pdf', sep='')},
+      content = function(file){
+        pdf(file = file)
+        somaticInteractions(mafScreen, fontSize = 0.6)
+        dev.off()},
+      contentType = 'pdf'
+    )
+    output$saveMafGeneWaterFall <- downloadHandler(
+      filename = function(){paste(strsplit(input$mafVisual$name, '[.]')[[1]][1], '_oncoplot.pdf', sep='')},
+      content = function(file){
+        ggsave(file, plot = oncoplot(mafScreen, top = input$mafTop, 
+                                     topBarData = sampleData(),
+                                     rightBarData = genesData(),
+                                     bgCol = '#EEEEEE',
+                                     colors = c('SNP' = '#FE817D', 'INS' = '#45BC9C', 'DEL' = '#FFCD6E', 'orange', 'purple'),
+                                     drawColBar = !is.null(input$topIn),
+                                     drawRowBar = !is.null(input$rightIn),
+                                     sampleOrder = samOrder()), device = 'pdf',
+               width = 1000/3,
+               height = (600+20*(length(mafMutGene)-20)*(length(mafMutGene)>20))/3,
+               units = 'mm',
+               dpi = 600,
+               limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$surPlotSave <- downloadHandler(
+      filename = function() {paste0(strsplit(input$clinicalData$name, '[.]')[[1]][1],'_survival.pdf')},
+      content = function(file) {ggsave(file, plot = surResult(), device = 'pdf', 
+                                       dpi = 600,
+                                       width = ceiling(sqrt(length(isolate(input$surFactor))))*input$surPlotSize/2.5,
+                                       height = round(sqrt(length(isolate(input$surFactor))))*input$surPlotSize/2.5,
+                                       units = 'mm',
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$coxForestSave <- downloadHandler(
+      filename = function() {paste0(strsplit(input$clinicalData$name, '[.]')[[1]][1],'_coxforest.pdf')},
+      content = function(file) {ggsave(file, plot = coxForest(), device = 'pdf', 
+                                       dpi = 600,
+                                       width = input$forestSize/2.5,
+                                       height = (100+20*nrow(surResult()))/2.5,
+                                       units = 'mm',
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$coxResultSave <- downloadHandler(
+      filename = function() {paste0(strsplit(input$clinicalData$name, '[.]')[[1]][1],'_cox.csv')},
+      content = function(file) {fwrite(surResult(), file, row.names = TRUE)})
+    #GO图下载
+    output$goDotUpSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_GO_Up_Dot.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = goDotUp(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$goBarUpSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_GO_Up_Bar.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = goBarUp(), device = 'pdf',
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$goDotDownSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_GO_Down_Dot.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = goDotDown(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$goBarDownSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_GO_Down_Bar.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = goBarDown(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$goDotAllSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_GO_All_Dot.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = goDotAll(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$goBarAllSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_GO_All_Bar.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = goBarAll(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    
+    #kegg图下载
+    output$keggDotUpSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_Up_Dot.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = keggDotUp(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$keggBarUpSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_Up_Bar.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = keggBarUp(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$keggDotDownSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_Down_Dot.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = keggDotDown(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$keggBarDownSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_Down_Bar.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = keggBarDown(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$keggDotAllSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_All_Dot.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = keggDotAll(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$keggBarAllSave <- downloadHandler(
+      filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_All_Bar.pdf', sep='') },
+      content = function(file) {ggsave(file, plot = keggBarAll(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
   }
 }
