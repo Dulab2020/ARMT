@@ -38,7 +38,6 @@ app_server <- function( input, output, session ) {
     else{updateCheckboxGroupInput(session, 'cancerType','Choose the cancer type:',inline = T, 
                                   choices = allCancer)}
   })
-  observeEvent(input$downloadTCGA, {downloadTCGAdata(input$cancerType, input$dataList)})
   #获取内部临床信息文件
   chooseInterClinical <- reactive({
     if(!is.null(input$cancerType)){
