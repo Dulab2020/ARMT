@@ -14,17 +14,17 @@ app_ui <- function(request) {
   fluidPage( theme = shinytheme('flatly'),
              tabsetPanel(useShinyjs(),
                          #获取文件的UI
-                         tabPanel('New', titlePanel('Creater'),
+                         tabPanel('Data', titlePanel('Data'),
                                   sidebarLayout(
                                     sidebarPanel(
-                                      h4('TCGADownload'),
+                                      h4('Clinical Data'),
                                       checkboxGroupInput('cancerType', 'Choose the cancer type:', inline = T ,choices = allCancer),
                                       checkboxInput('all','All'),
-                                      downloadButton('getInterClinical', 'Get internal clinical data'),
+                                      downloadButton('getInterClinical', 'Get internal TCGA clinical data'),
                                       br(),
                                       br(),
-                                      h4('Geneset Creater'),
-                                      fileInput('genesetCsv', 'Choose geneset .csv file:',
+                                      h4('Geneset Data'),
+                                      fileInput('genesetCsv', 'Input geneset .csv file:',
                                                 accept=c('text/csv', 'text/comma-separated-values,text/plain')),
                                       actionButton('creatGmt', 'Creat gmt file')
                                     ),
@@ -38,13 +38,13 @@ app_ui <- function(request) {
                                   )       
                          ),
                          #GSVA的UI
-                         tabPanel('Counts',titlePanel("GSVA"),
+                         tabPanel('Normalization & GSVA',titlePanel("Normalization & GSVA"),
                                   sidebarLayout(
                                     sidebarPanel(
-                                      fileInput('countsMatrix', 'Choose counts file:',
+                                      fileInput('countsMatrix', 'Input counts file with Ensembl ID:',
                                                 accept=c('text/csv', 'text/comma-separated-values,text/plain')),
                                       selectInput('sampleType', 'Sample Type', choices = c('All' = 'all', 'Tumor' = 'tumor', 'Normal'= 'normal'), selected = 'tumor'),
-                                      checkboxGroupInput('genesetlist', 'Choose the gene set:',
+                                      checkboxGroupInput('genesetlist', 'Choose the gene set in MSigDB:',
                                                          choices = c(
                                                            'H: hallmark gene sets' = 'h',
                                                            'C1: positional gene sets' = 'c1',
@@ -57,8 +57,8 @@ app_ui <- function(request) {
                                                            'C8: cell type signature gene sets' = 'c8'
                                                          )
                                       ),
-                                      fileInput('gmtFile', 'Choose *.gmt file:', accept = '.gmt'),
-                                      actionButton('GSVA', 'Calculate')
+                                      fileInput('gmtFile', 'Input gene set file(.gmt):', accept = '.gmt'),
+                                      actionButton('GSVA', 'Calculate GSVA score')
                                     ),
                                     mainPanel(
                                       uiOutput('titleGSVA'),
@@ -72,16 +72,16 @@ app_ui <- function(request) {
                                   )
                          ), 
                          #临床信息整理的UI
-                         tabPanel('Clinical',titlePanel("Clinical"),
+                         tabPanel('Integration & Analysis',titlePanel("Data Integration"),
                                   fluidRow(
                                     column(width = 3,
-                                           fileInput('clinicalData', 'Choose clinical .csv file:',
+                                           fileInput('clinicalData', 'Input clinical file(.csv):',
                                                      accept='.csv'),
-                                           fileInput('gsvaData', 'Choose GSVA .csv file:',
+                                           fileInput('gsvaData', 'Input GSVA file(.csv):',
                                                      accept='.csv'),
-                                           fileInput('tpmData', 'Choose TPM .csv file:',
+                                           fileInput('tpmData', 'Input TPM file(.csv):',
                                                      accept='.csv'),
-                                           fileInput('mafData', 'Choose maf.gz file:',
+                                           fileInput('mafData', 'Input mutation maf file:',
                                                      accept=c('.maf.gz', '.maf'))
                                     ),
                                     column(width = 3,
@@ -90,14 +90,14 @@ app_ui <- function(request) {
                                            uiOutput('chooseGroup'),
                                            fluidRow(
                                              column(width = 9,
-                                                    textAreaInput('keyGeneList', 'Gene names', height = 110, placeholder = 'TP53,EEF2,RPS2......')
+                                                    textAreaInput('keyGeneList', 'Input Gene names', height = 110, placeholder = 'TP53,EEF2,RPS2......')
                                              ),
                                              column(width = 1,
                                                     br(),
-                                                    actionButton('addTpm','TPM'),
+                                                    actionButton('addTpm','Integrate TPM'),
                                                     br(),
                                                     br(),
-                                                    actionButton('addMaf','MAF')
+                                                    actionButton('addMaf','Integrate MAF')
                                              )
                                            )
                                     ),
@@ -108,13 +108,14 @@ app_ui <- function(request) {
                                   ),
                                   #数据分析的UI
                                   fluidRow(hr()),
+                                  fluidRow(titlePanel('Analysis')),
                                   fluidRow(tabsetPanel(
                                     #生存分析
                                     tabPanel('Survival',
                                              sidebarLayout(
                                                sidebarPanel(
-                                                 selectInput('surWay', 'Choose your calculate way:', choices = 
-                                                               c('Survival' = 'sur', 'Single Cox' = 'singleCox', 'Multiple Cox' = 'multipleCox')),
+                                                 selectInput('surWay', 'Choose analysis way:', choices = 
+                                                               c('Kaplan-Meier Curve' = 'sur', 'Univarivity Cox Analysis' = 'singleCox', 'Multivarivity Cox Analysis' = 'multipleCox')),
                                                  uiOutput('surGroupUI'),
                                                  uiOutput('chooseSurFactor'),
                                                  uiOutput('coxRefUI'),
@@ -131,29 +132,29 @@ app_ui <- function(request) {
                                              )
                                     ),
                                     #差异分析
-                                    tabPanel('DEA', sidebarLayout(
+                                    tabPanel('Differential Analysis', sidebarLayout(
                                       sidebarPanel(
                                         h3('Differential Analysis'),
-                                        fileInput('deaData', 'Input the file to analysis:', accept = c('.csv', '.maf.gz', '.maf')),
-                                        radioButtons('deaWay', 'Choose the tool to DEA: ', choices = c('Counts' = 'edg','GSVA' = 'lm', 'Maf' = 'maf'), inline = TRUE),
+                                        fileInput('deaData', 'Input the file to differential analysis:', accept = c('.csv', '.maf.gz', '.maf')),
+                                        radioButtons('deaWay', 'Choose the type of differential object: ', choices = c('Gene expression' = 'edg','GSVA score' = 'lm', 'Mutation' = 'maf'), inline = TRUE),
                                         checkboxInput('deaTCGAFlag', 'TCGA', value = TRUE),
                                         uiOutput('chooseDeaFactor'),
-                                        sliderInput('groupCutOff', 'The group cut off:', min = 0, max = 0.5, value = 0.3, step = 0.01),
+                                        sliderInput('groupCutOff', 'The group cut off value:', min = 0, max = 0.5, value = 0.3, step = 0.01),
                                         fluidRow(column(width = 6, uiOutput('chooseExperience')),
                                                  column(width = 6, uiOutput('chooseControl'))
                                         ),
                                         actionButton('calDiffer', 'Calculate'),
                                         uiOutput('deaGroupUI'),
-                                        sliderInput('logFCCutOff', 'logFC cut off:', min = 0, max = 2, value = 1, step = 0.01),
-                                        sliderInput('pCutOff', 'P-value cut off:', min = 0, max = 1, value = 0.05, step = 0.01),
-                                        sliderInput('fdrCutOff', 'FDR(or adj.P) cut off:', min = 0, max = 1, value = 0.02, step = 0.01),
+                                        sliderInput('logFCCutOff', 'logFC cut off(>):', min = 0, max = 10, value = 2, step = 0.5),
+                                        sliderInput('pCutOff', 'P-value cut off(<):', min = 0, max = 0.2, value = 0.05, step = 0.01),
+                                        sliderInput('fdrCutOff', 'FDR(or adj.P) cut off(<):', min = 0, max = 0.2, value = 0.05, step = 0.01),
                                         hr(),
-                                        h3('Enrich Analysis'), 
-                                        fluidRow(sliderInput('enrichPCut', 'P Cut Off:', min = 0, max = 1, step = 0.01, value = 0.1),
-                                                 sliderInput('enrichQCut', 'q Cut Off:', min = 0, max = 1, step = 0.01, value = 0.2),
+                                        h3('Enrichment Analysis'), 
+                                        fluidRow(sliderInput('enrichPCut', 'p Cut Off(<):', min = 0, max = 0.2, value = 0.05, step = 0.01),
+                                                 sliderInput('enrichQCut', 'q Cut Off(<):', min = 0, max = 0.2, value = 0.05, step = 0.01),
                                                  selectInput('enrichOnto', 'GO:ONTOLOGY', choices = c('ALL', 'MF', 'CC', 'BP')),
-                                                 column(width = 6, actionButton('calGO', 'GO Analysis')),
-                                                 column(width = 6, actionButton('calKegg', 'KEGG Analysis'))),
+                                                 column(width = 6, actionButton('calGO', 'GO Enrichment')),
+                                                 column(width = 6, actionButton('calKegg', 'KEGG Enrichment'))),
                                       ),
                                       mainPanel(
                                         uiOutput('showDea'),
@@ -167,16 +168,16 @@ app_ui <- function(request) {
                                       )
                                     )),
                                     #相关性分析
-                                    tabPanel('COR', sidebarLayout(
+                                    tabPanel('Correlation', sidebarLayout(
                                       sidebarPanel(
-                                        h2('Correlation'),
+                                        h2('Correlation Analysis'),
                                         uiOutput('chooseCorFactor1'),
                                         uiOutput('chooseCorFactor2'),
                                         selectInput('corWay', 'Correlation Coefficient:', choices = c('Spearman'= 'spearman', 'Pearson' = 'pearson')),
                                         actionButton('calCor', 'Calculate'),
                                         uiOutput('corActiveUI'),
-                                        sliderInput('corrCut', 'r Cut Off:', min = 0, max = 1, value = 0),
-                                        sliderInput('corpCut', 'p Cut Off:', min = 0, max = 1, value = 1)
+                                        sliderInput('corrCut', 'r Cut Off(>):', min = 0, max = 1, value = 0, step = 0.01),
+                                        sliderInput('corpCut', 'p Cut Off(<):', min = 0, max = 2, value = 0.05, step = 0.01)
                                       ),
                                       mainPanel(
                                         uiOutput('corShow'),
@@ -186,13 +187,13 @@ app_ui <- function(request) {
                                   ))
                          ),
                          #maf文件可视化
-                         tabPanel('Maftools', titlePanel('Mutation Visualization'),
+                         tabPanel('Mutant mapping', titlePanel('Mutation Visualization'),
                                   sidebarLayout(sidebarPanel(
-                                    fileInput('mafVisual', 'Choose maf.gz file:',
+                                    fileInput('mafVisual', 'Input mutation profile(maf):',
                                               accept=c('.maf.gz','.maf')),
                                     checkboxInput('mafTCGAFlag', 'TCGA', value = TRUE),
                                     selectInput('mafShowMode', 'Plot Mode:', choices = c('Self-defined' = 'self',
-                                                                                         'Summary' = 'sum')),
+                                                                                         'Maftools Summary' = 'sum')),
                                     numericInput('mafTop', 'Top:', min = 1, max = 50, step = 1, value = 20),
                                     uiOutput('mafIn'),
                                     actionButton('mafPlot', 'Plot Out')

@@ -41,7 +41,7 @@ app_server <- function( input, output, session ) {
   #获取内部临床信息文件
   chooseInterClinical <- reactive({
     if(!is.null(input$cancerType)){
-      output$titleInterClinical <- renderUI({h3('ClinicalData')})
+      output$titleInterClinical <- renderUI({h3('Clinical Data')})
       shinyjs::show(id = 'titleInterClinical')}
     else{
       shinyjs::hide(id = 'titleInterClinical')}
@@ -56,7 +56,7 @@ app_server <- function( input, output, session ) {
     if(is.null(input$genesetCsv))
       NULL
     else
-      h3('GeneSet')
+      h3('Gene Set')
   })
   observeEvent(input$creatGmt,{
     writeGmt(genesetMatrix(), paste(strsplit(input$genesetCsv$name, '[.]')[[1]][1], '.gmt', sep='') )
@@ -298,7 +298,7 @@ app_server <- function( input, output, session ) {
     temp <- tryCatch(newClinalData()[,input$deaFactor], error = function(x){NULL})
     if(!is.numeric(temp)){
       factorDea <- levels(as.factor(temp))
-      output$chooseExperience <- renderUI(selectInput('exGroup','Experience group', choices = factorDea))
+      output$chooseExperience <- renderUI(selectInput('exGroup','Experiment group', choices = factorDea))
       output$chooseControl <- renderUI(selectInput('ctGroup','Control group', choices = factorDea))
       shinyjs::hide('groupCutOff')
       shinyjs::show('exGroup')
@@ -531,14 +531,14 @@ app_server <- function( input, output, session ) {
     else{280 + (n-8)*20}}) #KEGG图高度
   output$goHead <- renderUI({
     if(!is.null(goResult())){
-      fluidRow(h2('GO Result'),
+      fluidRow(h2('GO Enrichment Result'),
                numericInput('goShowNum', 'Show Number:', min = 3, max = 20, value = 5))
     }
     else{NULL}
   }) #GO结果设置及标题
   output$keggHead <- renderUI({
     if(!is.null(keggResult())){
-      fluidRow(h2('KEGG Result'),
+      fluidRow(h2('KEGG Enrichment Result'),
                numericInput('keggShowNum', 'Show Number:', min = 3, max = 20, value = 5))
     }
     else{NULL}
@@ -560,13 +560,13 @@ app_server <- function( input, output, session ) {
       
       fluidRow(
         tabsetPanel(
-          tabPanel('Up', DT::DTOutput('goShowMatrixUp'),
+          tabPanel('Up regulation', DT::DTOutput('goShowMatrixUp'),
                    downloadButton('getGOMatrixUp', 'Save'),
                    plotOutput('goShowDotUp', width = 800, height = goHeight()),
                    downloadButton('goDotUpSave', 'Save(.pdf)'),
                    plotOutput('goShowBarUp', width = 800, height = goHeight()),
                    downloadButton('goBarUpSave', 'Save(.pdf)')),
-          tabPanel('Down', DT::DTOutput('goShowMatrixDown'),
+          tabPanel('Down regulation', DT::DTOutput('goShowMatrixDown'),
                    downloadButton('getGOMatrixDown', 'Save'),
                    plotOutput('goShowDotDown', width = 800, height = goHeight()),
                    downloadButton('goDotDownSave', 'Save(.pdf)'),
@@ -729,12 +729,12 @@ app_server <- function( input, output, session ) {
     if(input$mafShowMode == 'sum'){NULL}
     else if(input$mafShowMode == 'self'){
       fluidRow(
-        fileInput('topIn', 'Input sample data:', accept = '.csv'),
-        fileInput('rightIn', 'Input genes data:', accept = '.csv'),
-        selectInput('mafMutationType', 'Select a mutation Type:', 
+        fileInput('topIn', 'Input sample data(.csv):', accept = '.csv'),
+        fileInput('rightIn', 'Input genes data(.csv):', accept = '.csv'),
+        selectInput('mafMutationType', 'Select mutation Type:', 
                     choices = extrcactVariantType(mafObj()), multiple = TRUE),
         uiOutput('gpUI'),
-        radioButtons('mafGeneOrPath', 'Select your interested object:', choices = c('Genes', 'Pathway'))
+        radioButtons('mafGeneOrPath', 'Select your interested object:', choices = c('Genes', 'Pathway(Gene set)' = 'Pathway'))
       )
     }
   })
@@ -743,7 +743,7 @@ app_server <- function( input, output, session ) {
       if(input$mafGeneOrPath == 'Genes'){
         output$gpUI <- renderUI(textAreaInput('mafGene', 'Input the genes name:', placeholder = 'TP53,PRR11,SPP1...'))}
       else if(input$mafGeneOrPath == 'Pathway'){
-        output$gpUI <- renderUI(fluidPage(fileInput('mafGmt', 'Input a .gmt file:', accept = '.gmt'),
+        output$gpUI <- renderUI(fluidPage(fileInput('mafGmt', 'Input gene set file(.gmt):', accept = '.gmt'),
                                           uiOutput('choosePathway')
         ))}
     } 
@@ -784,7 +784,7 @@ app_server <- function( input, output, session ) {
       output$mafSum <- renderPlot(plotmafSummary(maf = mafTemp, top = input$mafTop))
       output$mafSumWaterFall <- renderPlot(oncoplot(maf = mafTemp, top = input$mafTop), width = 1000)
       output$mafSumPathway <- renderCachedPlot({sump <- OncogenicPathways(mafTemp)
-      output$selectSumPathway <- renderUI(selectInput('mafSumKeyPath', 'Choose a known pathway:', choices = rev(sump$Pathway)))}, 
+      output$selectSumPathway <- renderUI(selectInput('mafSumKeyPath', 'Choose a pathway:', choices = rev(sump$Pathway)))}, 
       cacheKeyExpr = {sump <- OncogenicPathways(mafTemp)})
       output$mafSumKeyPathPlot <- renderPlot(if(!is.null(input$mafSumKeyPath)){PlotOncogenicPathways(mafTemp, pathways = input$mafSumKeyPath)})
       output$mafShow <- renderUI({fluidRow(plotOutput('mafSum'),
