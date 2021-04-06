@@ -40,7 +40,7 @@ To install this package from Github, please, use the code below.
 ```
 if (!requireNamespace("devtools", quietly = TRUE))
     install.packages("devtools")
-devtools::install_github(“Dulab2020/Wstation”)
+devtools::install_github("Dulab2020/Wstation")
 ```
 ## Quick Star:
 The following commands should be used in order to start the graphical user interface.
