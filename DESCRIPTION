@@ -1,13 +1,16 @@
-Package: Wstation
-Title: An Amazing Shiny App
+Package: ARMT
+Title: ARMT:auto RNA-seq data minning tool(GUI)
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "firstname",
-           family = "lastname",
+    person(given = "Gunther",
+           family = "Wong",
            role = c("aut", "cre"),
            email = "1003589085@qq.com")
-Description: What the package does (one paragraph).
-License: What license is it under?
+Description: The aim of TCGAbiolinks is : 
+    i) integrate and facilitate the downstream analysis of RNA-seq data,
+    ii) provide the way to analyze geneset according to GSVA, 
+    iii) bulid a bridge between gene expression and mutation.
+License: GPL(>=3)
 Imports: 
     BiocManager,
     config,
@@ -39,4 +42,4 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Depends: 
-    R (>= 2.10)
+    R (>= 4.0.0)

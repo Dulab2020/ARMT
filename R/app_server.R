@@ -755,7 +755,7 @@ app_server <- function( input, output, session ) {
                         detail = 'This may take a while...', value = 1)
     originMaf <- read.maf(input$mafVisual$datapath, isTCGA = input$mafTCGAFlag)
     readMafProgress$set(value = 2)
-    originMaf@data$Variant_Classification <- originMaf@data$Variant_Type
+    originMaf@data$Variant_Classification <- originMaf@data$VARIANT_CLASS
     readMafProgress$set(value = 3)
     originMaf
   })
@@ -799,7 +799,7 @@ app_server <- function( input, output, session ) {
       mafMutType <<- input$mafMutationType
       mafMutGene <<- unlist(strsplit(input$mafGene, ','))
       if(input$mafGeneOrPath == 'Genes'){
-        mafScreen <<- subsetMaf(mafTemp, genes = mafMutGene, query = 'Variant_Classification %in% mafMutType')
+        mafScreen <<- subsetMaf(mafTemp, genes = mafMutGene, query = 'VARIANT_CLASS %in% mafMutType')
         output$mafVaf <- renderPlot(plotVaf(maf = mafScreen))
         output$mafSomatic <- renderCachedPlot(somaticInteractions(mafScreen), cacheKeyExpr = {somaticInteractions(mafScreen)})
         output$mafGeneWaterFall <- renderPlot(oncoplot(mafScreen, top = input$mafTop, 
@@ -820,7 +820,7 @@ app_server <- function( input, output, session ) {
                                              downloadButton('saveMafGeneWaterFall', 'Save(.pdf)'))})
       }
       else if(input$mafGeneOrPath == 'Pathway'){
-        mafScreen <- subsetMaf(mafTemp, query = 'Variant_Classification %in% mafMutType')
+        mafScreen <- subsetMaf(mafTemp, query = 'VARIANT_CLASS %in% mafMutType')
         output$mafPathSummary <- renderCachedPlot(OncogenicPathways(mafScreen, pathways = genesetTable()), cacheKeyExpr = {OncogenicPathways(mafScreen, pathways = genesetTable())})
         output$mafPathWaterFall <- renderPlot(oncoplot(mafScreen, top = input$mafTop, 
                                                        topBarData = sampleData(),

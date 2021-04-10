@@ -8,11 +8,12 @@
 #' @import shinyjs
 #' @noRd
 app_ui <- function(request) {
-  data("interdata", package = 'Wstation')
+  data("interdata", package = 'ARMT')
   geneLength <- interdata$gLen
   geneSet <- interdata$gSet
   fluidPage( theme = shinytheme('flatly'),
              tabsetPanel(useShinyjs(),
+                         selected = 'Data',
                          #获取文件的UI
                          tabPanel('Data', titlePanel('Data'),
                                   sidebarLayout(
@@ -225,7 +226,7 @@ golem_add_external_resources <- function(){
     favicon(),
     bundle_resources(
       path = app_sys('app/www'),
-      app_title = 'Wstation'
+      app_title = 'ARMT'
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert() 

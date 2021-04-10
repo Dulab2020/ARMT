@@ -15,7 +15,7 @@
 #'  @import data.table
 #'  @import GSEABase
 #'  @import ggcorrplot
-data("interdata", package = 'Wstation')
+data("interdata", package = 'ARMT')
 geneLength <- interdata$gLen
 geneSet <- interdata$gSet
 
@@ -543,7 +543,7 @@ plotHeat <- function(data){
 #提取maf文件突变类型
 extrcactVariantType <- function(mafObject){
   if(is.null(mafObject)){return(NULL)}
-  typeList <- levels(as.factor(mafObject@data$Variant_Type))
+  typeList <- levels(as.factor(mafObject@data$VARIANT_CLASS))
   return(typeList)
 }
 
