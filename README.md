@@ -1,9 +1,13 @@
-# Wstation
+# ARMT
 ## Introduction:
-Wstation is an R package created to help users without knowledge of programming to analyze RNA-seq data at downstream. It provides a convenient way to calculate GSVA score and analyze it. This package offers a graphical user interface with the R  package ‘shiny’. Also, many other useful packages from Bioconductor have been used for data analysis and visualization.
+ARMT is auto RNA-seq data minning tool
+The aim of ARMT is : 
+    i) integrate and facilitate the downstream analysis of RNA-seq data,
+    ii) provide the way to analyze geneset according to GSVA, 
+    iii) explore the correlation of gene expression and mutation.
+License: GPL(>=3)
 ##### The packages from Bioconductoe including:
 maftools<br>
-TCGAbiolinks<br>
 GSVA<br>
 GSVAdata<br>
 limma<br>
@@ -12,39 +16,37 @@ org.Hs.eg.db<br>
 edgeR<br>
 survival<br>
 clusterProfiler<br>
-SummarizedExperiment<br>
 DOSE<br>
 ## Function:
-Downloading counts data & clinical data from TCGA<br>
-Creating .gmt file for self-identified geneset<br>
-Calculation of TPM matrix & GSVA score<br>
+Provide TCGA clinical data
+Create .gmt file for arbitary geneset<br>
+Normalization of counts matrix (TPM)
+Gene set variant analysis<br>
 Survival analysis<br>
 Differential analysis<br>
 Correlation analysis<br>
 Plot the mutation information<br>
 ## Feature:
 Easy to use<br>
-Does not need programming<br>
 Automation<br>
-GUI<br>
-Multi-function<br>
+Visualization<br>
 Comprehensiveness<br>
-Integrated GSVA score analysis<br>
+Integrating GSVA score analysis<br>
 ## Structure:
-![Figure0](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure0.PNG)
+![Figure0](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure0.tif)
 ## Dependencies:
 R >=4.0.2, Rstudio, R packages(devtools or remotes)<br>
-The other dependencies, such as ‘TCGAbiolinks’ and ‘maftools’ are automatically installed. By default, outdated dependencies are automatically upgraded. In interactive sessions you can select a subset of the dependencies to upgrade.
+The other dependencies are automatically installed. By default, outdated dependencies are automatically upgraded. In interactive sessions you can select a subset of the dependencies to upgrade.
 ## Installation:
 To install this package from Github, please, use the code below.
 ```
 if (!requireNamespace("devtools", quietly = TRUE))
     install.packages("devtools")
-devtools::install_github("Dulab2020/Wstation")
+devtools::install_github("Dulab2020/ARMT")
 ```
 ## Quick Star:
 The following commands should be used in order to start the graphical user interface.
-```Wstation::run_app()```
+```ARMT::run_app()```
 ## Detail:
 The main function of this tool is data analysis. The following Figure1 is the input and adjustment interface of the analyzed data, which can input clinical data, TPM matrix, GSVA data and mutation information data.<br>
 ![Figure1](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure1.png)

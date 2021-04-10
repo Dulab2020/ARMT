@@ -6,10 +6,10 @@ Authors@R:
            family = "Wong",
            role = c("aut", "cre"),
            email = "1003589085@qq.com")
-Description: The aim of TCGAbiolinks is : 
+Description: The aim of ARMT is : 
     i) integrate and facilitate the downstream analysis of RNA-seq data,
     ii) provide the way to analyze geneset according to GSVA, 
-    iii) bulid a bridge between gene expression and mutation.
+    iii) explore the correlation of gene expression and mutation.
 License: GPL(>=3)
 Imports: 
     BiocManager,
