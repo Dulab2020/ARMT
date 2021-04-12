@@ -18,13 +18,14 @@ survival<br>
 clusterProfiler<br>
 DOSE<br>
 ## Function:
-Provide TCGA clinical data
+Provide TCGA clinical data<br>
 Create .gmt file for arbitary geneset<br>
-Normalization of counts matrix (TPM)
+Normalization of counts matrix (TPM)<br>
 Gene set variant analysis<br>
 Survival analysis<br>
 Differential analysis<br>
 Correlation analysis<br>
+Analysis for multiple sets of data<br>
 Plot the mutation information<br>
 ## Feature:
 Easy to use<br>
@@ -33,7 +34,7 @@ Visualization<br>
 Comprehensiveness<br>
 Integrating GSVA score analysis<br>
 ## Structure:
-![Figure0](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure0.tif)
+![Figure0](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure0.png)
 ## Dependencies:
 R >=4.0.2, Rstudio, R packages(devtools or remotes)<br>
 The other dependencies are automatically installed. By default, outdated dependencies are automatically upgraded. In interactive sessions you can select a subset of the dependencies to upgrade.
