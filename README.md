@@ -1,10 +1,14 @@
 # ARMT
 ## Introduction:
-ARMT is auto RNA-seq data minning tool
+ARMT is auto RNA-seq data minning tool.<br>
 The aim of ARMT is : 
     i) integrate and facilitate the downstream analysis of RNA-seq data,
     ii) provide the way to analyze geneset according to GSVA, 
     iii) explore the correlation of gene expression and mutation.
+Author:
+Guanda Huang —— 202010108432@mail.scut.edu.cn
+Hongli Du —— hldu@scut.edu.cn
+Year: 2021
 License: GPL(>=3)
 ##### The packages from Bioconductoe including:
 maftools<br>
@@ -46,106 +50,96 @@ if (!requireNamespace("devtools", quietly = TRUE))
 devtools::install_github("Dulab2020/ARMT")
 ```
 ## Quick Star:
-The following commands should be used in order to start the graphical user interface.
+The following commands should be used in order to start the graphical user interface(GUI).
 ```ARMT::run_app()```
-## Detail:
-The main function of this tool is data analysis. The following Figure1 is the input and adjustment interface of the analyzed data, which can input clinical data, TPM matrix, GSVA data and mutation information data.<br>
-![Figure1](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure1.png)
-*<p align="center">Figure1. Wstation can integrate clinical, GSVA, TPM and mutation data </p>*
-*Red area: File entry area<br>*
-*Green area: Select the columns of survival time and survival status<br>*
-*Blue area: Enter the genes name of interest and insert relevant TPM and mutation information into the sample information table in yellow area<br>*
-*Yellow area: Show the integrated sample data of all input<br>*
-All data should be input in .csv format with the exception of mutation data input in .maf format. Input data information must have the common samples information.<br>
-Recently, RNA-seq data analysis mainly includes survival analysis, differential analysis, and correlation analysis.<br>
-Survival time and survival status should be determined in advance in the data input (Figure1 green area). The following Figure2 show the interface of survival analysis.<br>
-![Figure2](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure2.PNG)
-*<p align="center">Figure2</p>*
-*Red area: File entry area & Selective analysis factor<br>*
-*Blue area: Show the table for survival analysis<br>*
-The survival analysis results are shown in Figure3.
-![Figure3](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure3.PNG)
-*<p align="center">Figure3. Survival analysis result of GSVA score</p>*
-In addition, cox regression model analysis for single-factor & multiple-factor can also be selected in Figure2 red area, and the results are shown in Figure4.
-![Figure4](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure4.PNG)
-*<p align="center">Figure4. Cox regression model analysis</p>*
-The target of differential analysis can be the counts matrix, GSVA matrix or the mutation information of relevant samples, as shown in Figure5 below.
-![Figure5](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure5.png)
-*<p align="center">Figure5. Differential analysis grouped by GSVA score</p>*
-*Red area: File entry area & Selective type of analysis target<br>*
-*Blue area: Setting up differential grouping<br>*
-*Green area: Filter for the result(Based on p-value, logFC & FDR)<br>*
-*Yellow area: Show of result, Figure5 show the result of Counts analysis. The GSVA differential analysis is similar but no volcano plotting.<br>*
-The differential result of the mutation .maf file is shown in a forest plotting as Figure6.
-![Figure6](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure6.PNG)
-*<p align="center">Figure6. The differential result of the mutation</p>*
-The results after differential analysis can be filtered according to p-value, FDR and logFC, and the filtered differential genes can be further enrichment analysis as shown in Figure7.
-![Figure7](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure7.png)
-*<p align="center">Figure7. Enrichment analysis</p>*
-*Red area: Filter for the enrichment analysis(pcut & qcut)<br>*
-*Blue area: Selective ONTOLOGY for GO enrichment(ALL、MF、CC & BP)<br>*
-*Green area: The number of pathways show in the pictures.<br>*
-*Yellow area: The result of enrichment analysis. The result of GO is similar to that of KEGG.<br>*
-The correlation analysis is directed toward the input data of Figure1. One set of features can be selected for pairwise correlation analysis or two sets of those can be selected for correlation analysis between each other as shown in Figure8.
-![Figure8](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure8.png)
-*<p align="center">Figure8. Correlation analysis between TPM and GSVA score</p>*
-*Red area: Selective features for correlation analysis.<br>*
-*Blue area: Filter of result(based on r & p-value).<br>*
-*Green area: Correlation matrix.<br>*
-*Yellow area: Table to show the detail of pairwise features correlation.<br>*
-Besides, there is also the heatmap about correlation as shown in Figure9.
-![Figure9](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure9.PNG)
-*<p align="center">Figure9. Heatmap from correlation analysis</p>*
-For the convenience of use, Wstation also provides TCGA data download function, and has the internal TCGA clinical data for use. It is recommended to directly obtain the internal data, as it is better suited for this tool. This function is on the first page of Wstation as shown in Figure10.
-![Figure10](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure10.png)
-*<p align="center">Figure10</p>*
-*Red area: Selective cancer type & data type(Counts or Clinical).<br>*
-*Blue area: File entry area for self-identified .gmt file.<br>*
-*Green area: The internal clinical data.<br>*
-This page also provides the function to generate the .gmt file, with two columns list table containing the gene sets name and genes name in a .csv file, the corresponding .gmt file can be generated for the following GSVA calculation.
-The calculation of GSVA requires the input of the Counts matrix (.csv) and the gene set file (.gmt). The gene set of MSigDB has been built in Wstation and can be selected here. Figure11 is the page to calculate GSVA score.
-![Figure11](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure11.png)
-*<p align="center">Figure11. The interface of GSVA calculation</p>*
-*Red area: Counts file entry area & Sample type selection<br>*
-*Blue area: Selective MSigDB gene sets & Gene set file entry area<br>*
-*Green area: GSVA matrix & TPM matrix.<br>*
-For exploring the relationship between RNA-seq data and gene mutations, Wstation integrates some functions of maftools. It requires the .maf file. The general state of mutation can be plot out in summary as shown in Figure12.
-![Figure12](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure12.png)
-*<p align="center">Figure12. The summary result of maftools</p>*
-*Red area: File entry area.<br>*
-*Blue area: Plot mode selection including ‘Summary’ & ‘Self-identified’.<br>*
-*Green area: The maximum number of genes to plot out.<br>*
-*Yellow area: Graphic of mutation information.<br>*
-In summary plot mode, the pathway display section can choose to display the mutation of the selected pathway, as shown in Figure13.
-![Figure13](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure13.png)
-*<p align="center">Figure13</p>*
-*Red area: Mutations in all known TCGA cohort pathways.<br>*
-*Blue area: All genes mutation in the selected pathway oncoplot.<br>*
-The main function of this part is the self-identified plot mode, which allows to select the interesting genes or pathway to plot out. The pathways should be input in a .gmt file as gene sets. Figure14 demonstrates the self-identified plot mode.
-![Figure14](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure14.png)
-*<p align="center">Figure14. The self-identified plot of some genes' mutation</p>*
-*Black area: Selection of genes or pathways. Figure14 show the genes selection.<br>*
-*Red area: Selective types of mutation & Entry of genes name.<br>*
-*Blue area: The distribution of genes mutation is showed in the boxplot.<br>*
-*Green area: Co-occurrence or mutually exclusive between pairwise genes.<br>*
-*Yellow area: Genes data and sample data entry area. These data can be showed with mutation information(Figure15).<br>*
-With the input data of samples’ GSVA score and the differential FDR of genes, the RNA-seq data analysis result will be demonstrated with mutation as shown in Figure15.
-![Figure15](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure15.png)
-*<p align="center">Figure15</p>*
-The sample data and gene data are required to have two columns in .csv file. The first column is the samples name or genes name, and the second column is the continuous variable data. These data should have the common samples and genes with .maf file.<br>
-Also, if the you are interested in pathways, the pathway can be selected, as shown in Figure16.
-![Figure16](https://github.com/Dulab2020/Wstation/blob/master/Figure/Figure16.png)
-*<p align="center">Figure16</p>*
-*Red area: The .gmt file entry & The selection of pathways in the .gmt file. <br>*
-*Blue area: Mutation state of all pathways.<br>*
-*Green area: An oncoplot similar to Figure15 to demonstrate all genes mutation in the selected pathways.<br>*
+##GUI of ARMT
+The GUI is developed based on 'shiny' package, and has four page including: Data, Normalization&GSVA, Integration&Analysis, Mutant mapping.<br>
+Figure1<br>
+The GUI consists of two parts, sidebar panel at left and main panel at right. The sidebar panel is used to input data and adjust parameters; the main panel is used to demonstrate and save the results.
 
+##Data
+Figure2<br>
+This page of ARMT provides TCGA clinical data and builds .gmt file of arbitrary geneset.<br> 
+Through the internal datasets of ARMT, you can get TCGA clinical data of 33 cancer types. <br>
+To build a .gmt file, a .csv file should be provided, and it must contain two column as shown in Figure3.<br>
+Figure3<br>
 
+##Normalization&GSVA
+In this page, ARMT automatically normalize the expression counts matrix to TPM matrix, and use log2(TPM) to process gene set variant analysis(GSVA). The input data must be gene expression matrix with Ensembl ID. <br> 
+There are 9 geneset from MSigDb in ARMT internal datasets available for direct selection to process GSVA, and it is also supported to input a .gmt file of arbitrary geneset from 'Data' page. If the input data is from TCGA, you can chose normal, tumor or all samples to process normalize and GSVA(default: tumor).
+Figure4<br>
 
+##Integration&Analysis
+ARMT can integrate clinical, GSVA, gene expression(TPM), gene mutation data together, and use these data to carry out analysis including: survival analysis&cox proportional hazards regression analysis, differential analysis, enrichment analysis and correlation analysis.<br>
 
+###Integration
+The integrated data should contain the common samples. You should input the clinical, GSVA, TPM data by .csv file which can be produced by 'Data' and 'Integration&Analysis' page, and the mutation data should be entered by .maf file. The next analysis is carried out according to these integrated data. You can choose a column in integrated data table as the 'Group Column' to separate the data into multiple group to analyze respectively. Also, you can input your own data in the same format.<br>
+Figure5<br>
+In this page, clinical data and GSVA data will be merged automatically, and you can enter your interested gene name in your TPM and mutation data to integrate their expression and mutation information by clicking 'Integrate TPM' and 'Integrate Maf' button. The integrated data is showed in main panel.
+###Survival analysis&Cox proportional hazards regression analysis
+In this page, you should choose two columns in integrated data table as the survival time and status of samples. Each column of integrated data table can be seem as a factor of samples to carried out survival analysis and cox proportional hazards regression analysis.<br> 
+Figure6<br>
+In survival analysis, if the survival factor  is a continuous variable, the samples will be grouped into two parts(high&low). You can choose multiple factors to obtain multiple analysis results(K-M curve).<br>
+Figure7<br>
+The cox analysis can focus on single-variable or multiple-variable. If the factor in cox analysis is not numeric variable, one value of this variable should be seem as a reference.<br>
 
+###Differential analysis
+ARMT can carry out differential analysis to GSVA score, gene mutation and expression. 
+The difference factor should be selected in the integrated data, and the samples will be grouped by it. If the difference factor is a numeric variable, the samples will be grouped into high and low, and the low part will be seem as control group. The group cut off value 't' is a adjustable parameter in ARMT(upper and lower t*100%). If the difference factor is not a numeric variable, you should select two values used to group the samples into experiment group and control group.
+You can screen the result by p-value, logFC and FDR(adj.p) after analysis and visualize it in main panel.<br>
+Figure8<br>
+To analyze difference of GSVA score, the  GSVA result of samples in integrated data should be entered through .csv file, and you can get this file in 'Normalization&GSVA' page.
+Figure9<br>
+To analyze difference of gene mutation, the mutation information of samples in integrated data should be entered through .maf file. The result is demonstrated with forest plot in main panel.<br>
+Figure10<br>
+To analyze difference of gene expression(DEG), the counts matrix of samples in integraated data should be entered through .csv file. The result is demonstrated with volcano plot in main panel.<br>
 
+###Enrichment analysis
+The enrichment analysis ways in ARMT include GO and KEGG. This enrichment is processed for differential expression gene(DEG) from above differential analysis.
+Figure10<br>
+You should set up the p-value and q-value cut off before enrichment analysis, and you can select your interested ontology(MF, CC, BP) of GO enrichment. The enriched genes are up regulation and down regulation in DEG, and their enrichment results(up regulation, down regulation and all DEG) are showed in different pages of main panel. These results are demonstrated with bar plot and dot plot.
 
+###Correlation analysis
+ARMT can calculate the correlation between any continuous variable factors of integration data, such as TPM and GSVA score. The result is demonstrated in main panel with heat map, and it can be descreened by p-value and correlation coefficient(r, Spearman or Pearson).<br>
+Figure11<br>
+ARMT can calculate correlation coefficient of each pair-factors.<br>
+Figure12<br>
+ARMT can calculate correlation coefficient between two list of factors.<br>
+If the integrated data is grouped by 'Group Column', ARMT can calculate correlation in each group of data by using single factor or all factors in the list 'Factor1'.<br>
+Figure13<br>
+For each group of data, the correlation coefficient between single factor and 'Factor2' list is put together in one result, and the single factor name is replaced by group name in correlation matrix.<br>
+Figure14<br>
+When all factors in 'Factor1' is demonstrated, you can choose one result of multiple groups in sidebar panel to show in main panel.
+
+##Mutant mapping
+In corporation with 'maftools', ARMT can visualize the gene mutation in .maf file. There are two plot modes: Maftools Summary and Self-defined. The number of top mutant genes plot out can be set in sidebar panel.<br>
+Figure15<br>
+In Maftools Summary mode, ARMT can plot the maf summary and illustrate the enrichment of known Oncogenic Signaling Pathways in TCGA cohorts. It is also supported to draw the oncoplot of interested pathway completely.<br>
+In Self-defined mode, ARMT can plot the map for any genes or genesets.<br>
+Figure16<br>
+Figure17<br>
+
+##Format of Input File
+The input data of ARMT include geneset, gene expression matrix, gene mutation, GSVA score matrix and clinical information.<br>
+#####Geneset
+In 'Data' page, the geneset file(.csv, Figure3) is used to create .gmt file, and the .gmt file is the main format of geneset input.<br>
+#####Gene expression matrix
+For gene expression, the counts matrix can be normalized to TPM matrix in ARMT.<br>
+Figure18<br>
+Counts matrix must be in a .csv file. The row name is gene Ensembl ID  and the column name is the sample ID. It is used to normalization and differential analysis.<br>
+Figure19<br>
+TPM matrix must be in a .csv file. The row names is gene symbol ID and the column names is the sample ID. It can be integrated with other data.<br>
+#####Gene mutation
+To get the mutation information, ARMT requires standard .maf file like the mutation annotation format file in TCGA.<br>
+#####GSVA score matrix
+The GSVA score matrix can be obtained in 'Normalization&GSVA' page.<br>
+Figure20<br>
+The GSVA score is saved in a matrix of .csv file. The row name is the sample ID, and the column name is geneset name.
+#####Clinical information
+The TCGA clinical information can be obtained in 'Data' page.<br>
+Figure21<br>
+The clinical data is input by a .csv file, and the row name is sample ID and column name is sample characteristic. Any information about samples in this format file can be input  as clinical data. <br>
+In 'example' folder, we have uploaded some example file to illustrate the input format of above data.
 
 
 

@@ -86,20 +86,13 @@ app_ui <- function(request) {
                                                      accept=c('.maf.gz', '.maf'))
                                     ),
                                     column(width = 3,
-                                           uiOutput('chooseTime'),
-                                           uiOutput('chooseStatus'),
                                            uiOutput('chooseGroup'),
                                            fluidRow(
-                                             column(width = 9,
-                                                    textAreaInput('keyGeneList', 'Input Gene names', height = 110, placeholder = 'TP53,EEF2,RPS2......')
-                                             ),
-                                             column(width = 1,
-                                                    br(),
-                                                    actionButton('addTpm','Integrate TPM'),
-                                                    br(),
-                                                    br(),
-                                                    actionButton('addMaf','Integrate MAF')
-                                             )
+                                             textAreaInput('keyGeneList', 'Input Gene names', width = 330, height = 220, placeholder = 'TP53,EEF2,RPS2......'),
+                                             column(width = 6,
+                                                    actionButton('addTpm','Integrate TPM')),
+                                             column(width = 6,
+                                                    actionButton('addMaf','Integrate MAF'))
                                            )
                                     ),
                                     column(width = 6,column(width = 12,
@@ -115,6 +108,8 @@ app_ui <- function(request) {
                                     tabPanel('Survival',
                                              sidebarLayout(
                                                sidebarPanel(
+                                                 uiOutput('chooseTime'),
+                                                 uiOutput('chooseStatus'),
                                                  selectInput('surWay', 'Choose analysis way:', choices = 
                                                                c('Kaplan-Meier Curve' = 'sur', 'Univarivity Cox Analysis' = 'singleCox', 'Multivarivity Cox Analysis' = 'multipleCox')),
                                                  uiOutput('surGroupUI'),
