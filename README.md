@@ -10,7 +10,7 @@ Guanda Huang —— 202010108432@mail.scut.edu.cn<br>
 Hongli Du —— hldu@scut.edu.cn<br>
 Year: 2021<br>
 License: GPL(>=3)<br>
-##### The packages from Bioconductor including:
+#### The packages from Bioconductor including:
 maftools<br>
 GSVA<br>
 GSVAdata<br>
@@ -121,21 +121,21 @@ Figure17<br>
 
 ## Format of Input File
 The input data of ARMT include geneset, gene expression matrix, gene mutation, GSVA score matrix and clinical information.<br>
-##### Geneset
+#### Geneset
 In 'Data' page, the geneset file(.csv, Figure3) is used to create .gmt file, and the .gmt file is the main format of geneset input.<br>
-#####Gene expression matrix
+####Gene expression matrix
 For gene expression, the counts matrix can be normalized to TPM matrix in ARMT.<br>
 Figure18<br>
 Counts matrix must be in a .csv file. The row name is gene Ensembl ID  and the column name is the sample ID. It is used to normalization and differential analysis.<br>
 Figure19<br>
 TPM matrix must be in a .csv file. The row names is gene symbol ID and the column names is the sample ID. It can be integrated with other data.<br>
-##### Gene mutation
+#### Gene mutation
 To get the mutation information, ARMT requires standard .maf file like the mutation annotation format file in TCGA.<br>
 ##### GSVA score matrix
 The GSVA score matrix can be obtained in 'Normalization&GSVA' page.<br>
 Figure20<br>
 The GSVA score is saved in a matrix of .csv file. The row name is the sample ID, and the column name is geneset name.
-##### Clinical information
+#### Clinical information
 The TCGA clinical information can be obtained in 'Data' page.<br>
 Figure21<br>
 The clinical data is input by a .csv file, and the row name is sample ID and column name is sample characteristic. Any information about samples in this format file can be input  as clinical data. <br>
