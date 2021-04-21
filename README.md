@@ -54,7 +54,7 @@ The following commands should be used in order to start the graphical user inter
 ```ARMT::run_app()```
 ## GUI of ARMT
 The GUI is developed based on 'shiny' package, and has four page including: Data, Normalization&GSVA, Integration&Analysis, Mutant mapping.<br>
-![Figure1](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure1.PNG)
+![Figure1](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure1.png)
 *<p align="center">Figure1. GUI of ARMT: The GUI consists of two parts, sidebar panel at left and main panel at right. The sidebar panel is used to input data and adjust parameters; the main panel is used to demonstrate and save the results.</p>*
 
 ## Data
@@ -78,7 +78,7 @@ The integrated data should contain the common samples. You should input the clin
 *<p align="center">Figure4. Data Integration: In this page, clinical data and GSVA data will be merged automatically, and you can enter your interested gene name in your TPM and mutation data to integrate their expression and mutation information by clicking 'Integrate TPM' and 'Integrate Maf' button. The integrated data is showed in main panel. </p>*
 ### Survival analysis&Cox proportional hazards regression analysis
 In this page, you should choose two columns in integrated data table as the survival time and status of samples. Each column of integrated data table can be seem as a factor of samples to carried out survival analysis and cox proportional hazards regression analysis.<br> 
-![Figure5](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure5.PNG)
+![Figure5](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure5.png)
 *<p align="center">Figure5. Survival Analysis: If the survival factor  is a continuous variable, the samples will be grouped into two parts(high&low). You can choose multiple factors to obtain multiple analysis results(K-M curve). </p>*
 ![Figure6](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure6.PNG)
 *<p align="center">Figure6. Cox Proportional Hazards Regression Analysis: The cox analysis can focus on single-variable or multiple-variable. If the factor in cox analysis is not numeric variable, one value of this variable should be seem as a reference.</p>*
@@ -87,33 +87,33 @@ In this page, you should choose two columns in integrated data table as the surv
 ARMT can carry out differential analysis to GSVA score, gene mutation and expression. 
 The difference factor should be selected in the integrated data, and the samples will be grouped by it. If the difference factor is a numeric variable, the samples will be grouped into high and low, and the low part will be seem as control group. The group cut off value 't' is a adjustable parameter in ARMT(upper and lower t*100%). If the difference factor is not a numeric variable, you should select two values used to group the samples into experiment group and control group.
 You can screen the result by p-value, logFC and FDR(adj.p) after analysis and visualize it in main panel.<br>
-![Figure7](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure7.PNG)
+![Figure7](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure7.png)
 *<p align="center">Figure7. The differential analysis of GSVA score: To analyze difference of GSVA score, the  GSVA result of samples in integrated data should be entered through .csv file, and you can get this file in 'Normalization&GSVA' page.</p>*
-![Figure8](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure8.PNG)
+![Figure8](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure8.png)
 *<p align="center">Figure8. The differential analysis of gene mutation: To analyze difference of gene mutation, the mutation information of samples in integrated data should be entered through .maf file. The result is demonstrated with forest plot in main panel.</p>*
 ![Figure9](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure9.PNG)
 *<p align="center">Figure9. The differential analysis of gene expression: To analyze difference of gene expression(DEG), the counts matrix of samples in integraated data should be entered through .csv file. The result is demonstrated with volcano plot in main panel.</p>*
 
 ### Enrichment analysis
 The enrichment analysis ways in ARMT include GO and KEGG. This enrichment is processed for differential expression gene(DEG) from above differential analysis.
-![Figure10](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure10.PNG)
+![Figure10](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure10.png)
 *<p align="center">Figure10. Enrichment Analysis: You should set up the p-value and q-value cut off before enrichment analysis, and you can select your interested ontology(MF, CC, BP) of GO enrichment. The enriched genes are up regulation and down regulation in DEG, and their enrichment results(up regulation, down regulation and all DEG) are showed in different pages of main panel. These results are demonstrated with bar plot and dot plot.</p>*
 
 ### Correlation analysis
 ARMT can calculate the correlation between any continuous variable factors of integration data, such as TPM and GSVA score. The result is demonstrated in main panel with correlation coefficient matrix and heat map, and it can be descreened by p-value and correlation coefficient(r, Spearman or Pearson).<br>
-![Figure11](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure11.PNG)
+![Figure11](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure11.png)
 *<p align="center">Figure11. ARMT can calculate correlation coefficient of each pair-factors.</p>*
-![Figure12](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure12.PNG)
+![Figure12](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure12.png)
 *<p align="center">Figure12. ARMT can calculate correlation coefficient between two list of factors.</p>*
 If the integrated data is grouped by 'Group Column', ARMT can calculate correlation in each group of data by using single factor or all factors in the list 'Factor1'.<br>
-![Figure13](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure13.PNG)
+![Figure13](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure13.png)
 *<p align="center">Figure13. For each group of data, the correlation coefficient between single factor and 'Factor2' list is put together in one result, and the single factor name is replaced by group name in correlation matrix. It is a case of pan-cancer correlation analysis. </p>*
-![Figure14](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure14.PNG)
+![Figure14](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure14.png)
 *<p align="center">Figure14. When all factors in 'Factor1' is demonstrated, you can choose one result of multiple groups in sidebar panel to show in main panel.</p>*
 
 ## Mutant mapping
 In corporation with 'maftools', ARMT can visualize the gene mutation in .maf file. There are two plot modes: Maftools Summary and Self-defined. The number of top mutant genes plot out can be set in sidebar panel.<br>
-![Figure15](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure15.PNG)
+![Figure15](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure15.png)
 ![Figure15_2](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure15_2.PNG)
 *<p align="center">Figure15. Maftools Summary: ARMT can plot the maf summary and illustrate the enrichment of known Oncogenic Signaling Pathways in TCGA cohorts. It is also supported to draw the oncoplot of interested pathway completely.</p>*
 In Self-defined mode, ARMT can plot the map for any genes or genesets, and the mutation types (deletion, insert, SNV) can be specified.<br>
