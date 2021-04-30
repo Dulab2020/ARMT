@@ -126,7 +126,7 @@ Figure16<br>
 The input data of ARMT include geneset, gene expression matrix, gene mutation, GSVA score matrix and clinical information.<br>
 #### Geneset
 In 'Data' page, the geneset file(.csv, Figure3) is used to create .gmt file, and the .gmt file is the main format of geneset input.<br>
-####Gene expression matrix
+#### Gene expression matrix
 For gene expression, the counts matrix can be normalized to TPM matrix in ARMT.<br>
 ![Figure18](https://github.com/Dulab2020/ARMT/blob/master/Figure/Figure18.PNG)
 *<p align="center">Figure18. Counts matrix must be in a .csv file. The row name is gene Ensembl ID  and the column name is the sample ID. It is used to normalization and differential analysis.</p>*
