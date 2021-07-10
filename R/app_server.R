@@ -294,6 +294,8 @@ app_server <- function( input, output, session ) {
   })
   #差异分析动态UI
   observe(if(input$calDiffer == 0){shinyjs::hide('volcanoSave')})#初始化隐藏火山图下载按钮
+  observe({if(input$deaWay != 'edg'){shinyjs::hide('deaNorm')}
+           else {shinyjs::show('deaNorm')}})#基因表达差异分析时才有标准化方法选择
   observe({
     temp <- tryCatch(newClinalData()[,input$deaFactor], error = function(x){NULL})
     if(!is.numeric(temp)){
@@ -351,7 +353,7 @@ app_server <- function( input, output, session ) {
           ct <- input$ctGroup
         }
         if(input$deaWay == 'edg'){
-          transferID(deaEdgeR(deaObj(), groupCondit, ex, ct))
+          transferID(deaEdgeR(deaObj(), groupCondit, ex, ct, input$deaNorm))
         }
         else if(input$deaWay == 'lm'){
           deaLimma(deaObj(), groupCondit, ex, ct)
@@ -377,7 +379,7 @@ app_server <- function( input, output, session ) {
             ct <- input$ctGroup
           }
           if(input$deaWay == 'edg'){
-            resultDea[[q]] <- transferID(deaEdgeR(deaObj(), groupCondit, ex, ct))
+            resultDea[[q]] <- transferID(deaEdgeR(deaObj(), groupCondit, ex, ct, input$deaNorm))
           }
           else if(input$deaWay == 'lm'){
             resultDea[[q]] <- deaLimma(deaObj(), groupCondit, ex, ct)
@@ -466,37 +468,78 @@ app_server <- function( input, output, session ) {
     }
     else{shinyjs::hide('showDea')}
   })
+  #富集分析动态UI
+  observe({if(input$enrichGene == 'DEG'){shinyjs::hide('enrichGeneInput')}
+    else {shinyjs::show('enrichGeneInput')}})#自定义富集基因在计算差异基因时隐藏
   #富集分析
-  enrichDeg <- reactive({list(up = symToEnt(deaScreen()[deaScreen()$Status == 'Up', ,drop = FALSE]),
-                              down = symToEnt(deaScreen()[deaScreen()$Status == 'Down', ,drop = FALSE]))
+  enrichDeg <- reactive({
+    #利用以上所得DEG
+    if(input$enrichGene == 'DEG'){
+      list(up = symToEnt(deaScreen()[deaScreen()$Status == 'Up', ,drop = FALSE]),
+           down = symToEnt(deaScreen()[deaScreen()$Status == 'Down', ,drop = FALSE]))
+    }
+    #自输入基因
+    else{
+      list(self = bitr(unlist(strsplit(input$enrichGeneInput, split = ',')), fromType = 'SYMBOL', toType = 'ENTREZID', OrgDb = 'org.Hs.eg.db'))
+    }
   })
   goResult <- eventReactive(input$calGO, {
-    goProgress <- Progress$new(min=1, max=4)
-    on.exit(goProgress$close())
-    goProgress$set(message = 'Calculation in eGO',
-                   detail = 'This may take a while...',
-                   value = 1)
-    goUp <- eGO(enrichDeg()$up, input$enrichPCut, input$enrichQCut, input$enrichOnto)
-    goProgress$set(value = 2)
-    goDown <- eGO(enrichDeg()$down, input$enrichPCut, input$enrichQCut, input$enrichOnto)
-    goProgress$set(value = 3)
-    goAll <- eGO(rbind(enrichDeg()$up, enrichDeg()$down), input$enrichPCut, input$enrichQCut, input$enrichOnto)
-    goProgress$set(value = 4)
-    list(up = goUp, down = goDown, all = goAll)
-  })
-  keggResult <- eventReactive(input$calKegg, {
-    keggProgress <- Progress$new(min=1, max=4)
-    on.exit(keggProgress$close())
-    keggProgress$set(message = 'Calculation in eKEGG',
+    #利用以上所得DEG
+    if(length(enrichDeg()) == 2){
+      goProgress <- Progress$new(min=1, max=4)
+      on.exit(goProgress$close())
+      goProgress$set(message = 'Calculation in eGO',
                      detail = 'This may take a while...',
                      value = 1)
-    keggUp <- eKegg(enrichDeg()$up, input$enrichPCut, input$enrichQCut)
-    keggProgress$set(value = 2)
-    keggDown <- eKegg(enrichDeg()$down, input$enrichPCut, input$enrichQCut)
-    keggProgress$set(value = 3)
-    keggAll <- eKegg(rbind(enrichDeg()$up, enrichDeg()$down), input$enrichPCut, input$enrichQCut)
-    keggProgress$set(value = 4)
-    list(up = keggUp, down = keggDown, all = keggAll)
+      goUp <- eGO(enrichDeg()$up, input$enrichPCut, input$enrichQCut, input$enrichOnto)
+      goProgress$set(value = 2)
+      goDown <- eGO(enrichDeg()$down, input$enrichPCut, input$enrichQCut, input$enrichOnto)
+      goProgress$set(value = 3)
+      goAll <- eGO(rbind(enrichDeg()$up, enrichDeg()$down), input$enrichPCut, input$enrichQCut, input$enrichOnto)
+      goProgress$set(value = 4)
+      list(up = goUp, down = goDown, all = goAll)
+    }
+    #自输入基因
+    else if(length(enrichDeg()) == 1){
+      goProgress <- Progress$new(min=1, max=2)
+      on.exit(goProgress$close())
+      goProgress$set(message = 'Calculation in eGO',
+                     detail = 'This may take a while...',
+                     value = 1)
+      eGOresult <- eGO(enrichDeg()$self, input$enrichPCut, input$enrichQCut, input$enrichOnto)
+      goProgress$set(value = 2)
+      return(list(self = eGOresult))
+    }
+    else{return(NULL)}
+  })
+  keggResult <- eventReactive(input$calKegg, {
+    #利用以上所得DEG
+    if(length(enrichDeg()) == 2){
+      keggProgress <- Progress$new(min=1, max=4)
+      on.exit(keggProgress$close())
+      keggProgress$set(message = 'Calculation in eKEGG',
+                       detail = 'This may take a while...',
+                       value = 1)
+      keggUp <- eKegg(enrichDeg()$up, input$enrichPCut, input$enrichQCut)
+      keggProgress$set(value = 2)
+      keggDown <- eKegg(enrichDeg()$down, input$enrichPCut, input$enrichQCut)
+      keggProgress$set(value = 3)
+      keggAll <- eKegg(rbind(enrichDeg()$up, enrichDeg()$down), input$enrichPCut, input$enrichQCut)
+      keggProgress$set(value = 4)
+      list(up = keggUp, down = keggDown, all = keggAll)
+    }
+    #自输入基因
+    else if(length(enrichDeg()) == 1){
+      keggProgress <- Progress$new(min=1, max=2)
+      on.exit(keggProgress$close())
+      keggProgress$set(message = 'Calculation in eKEGG',
+                       detail = 'This may take a while...',
+                       value = 1)
+      eKEGGresult <- eKegg(enrichDeg()$self, input$enrichPCut, input$enrichQCut)
+      keggProgress$set(value = 2)
+      return(list(self = eKEGGresult))
+    }
+    else{return(NULL)}
   })
   
   goDotUp <- reactive(plotDot(goResult()$up[[2]], 'GO', input$goShowNum))
@@ -516,6 +559,13 @@ app_server <- function( input, output, session ) {
   
   keggDotAll <- reactive(plotDot(keggResult()$all[[2]], 'KEGG', input$keggShowNum))
   keggBarAll <- reactive(plotBar(keggResult()$all[[2]], 'KEGG', input$keggShowNum))
+  
+  #利用自输入基因画的图
+  goDotSelf <- reactive(plotDot(goResult()$self[[2]], 'GO', input$goShowNum))
+  goBarSelf <- reactive(plotBar(goResult()$self[[2]], 'GO', input$goShowNum))
+  
+  keggDotSelf <- reactive(plotDot(keggResult()$self[[2]], 'KEGG', input$keggShowNum))
+  keggBarSelf <- reactive(plotBar(keggResult()$self[[2]], 'KEGG', input$keggShowNum))
   
   goHeight <- reactive({
     if(is.null(input$goShowNum)){n <- 5}
@@ -546,79 +596,113 @@ app_server <- function( input, output, session ) {
   output$goShow <- renderUI({
     if(!is.null(goResult())){
       shinyjs::show('goShow')
-      output$goShowMatrixUp <- DT::renderDT(goResult()$up[[1]], options=list(pageLength = 2))
-      output$goShowMatrixDown <- DT::renderDT(goResult()$down[[1]], options=list(pageLength = 2))
-      output$goShowMatrixAll <- DT::renderDT(goResult()$all[[1]], options=list(pageLength = 2))
-      
-      output$goShowDotUp <- renderPlot(goDotUp()) 
-      output$goShowDotDown <- renderPlot(goDotDown())
-      output$goShowDotAll <- renderPlot(goDotAll())
-      
-      output$goShowBarUp <- renderPlot(goBarUp()) 
-      output$goShowBarDown <- renderPlot(goBarDown())
-      output$goShowBarAll <- renderPlot(goBarAll())
-      
-      fluidRow(
-        tabsetPanel(
-          tabPanel('Up regulation', DT::DTOutput('goShowMatrixUp'),
-                   downloadButton('getGOMatrixUp', 'Save'),
-                   plotOutput('goShowDotUp', width = 800, height = goHeight()),
-                   downloadButton('goDotUpSave', 'Save(.pdf)'),
-                   plotOutput('goShowBarUp', width = 800, height = goHeight()),
-                   downloadButton('goBarUpSave', 'Save(.pdf)')),
-          tabPanel('Down regulation', DT::DTOutput('goShowMatrixDown'),
-                   downloadButton('getGOMatrixDown', 'Save'),
-                   plotOutput('goShowDotDown', width = 800, height = goHeight()),
-                   downloadButton('goDotDownSave', 'Save(.pdf)'),
-                   plotOutput('goShowBarDown', width = 800, height = goHeight()),
-                   downloadButton('goBarDownSave', 'Save(.pdf)'),),
-          tabPanel('All', DT::DTOutput('goShowMatrixAll'),
-                   downloadButton('getGOMatrixAll', 'Save'),
-                   plotOutput('goShowDotAll', width = 800, height = goHeight()),
-                   downloadButton('goDotAllSave', 'Save(.pdf)'),
-                   plotOutput('goShowBarAll', width = 800, height = goHeight()),
-                   downloadButton('goBarAllSave', 'Save(.pdf)'),)
+      #DEG
+      if(isolate(input$enrichGene) == 'DEG'){
+        output$goShowMatrixUp <- DT::renderDT(goResult()$up[[1]], options=list(pageLength = 2))
+        output$goShowMatrixDown <- DT::renderDT(goResult()$down[[1]], options=list(pageLength = 2))
+        output$goShowMatrixAll <- DT::renderDT(goResult()$all[[1]], options=list(pageLength = 2))
+        
+        output$goShowDotUp <- renderPlot(goDotUp()) 
+        output$goShowDotDown <- renderPlot(goDotDown())
+        output$goShowDotAll <- renderPlot(goDotAll())
+        
+        output$goShowBarUp <- renderPlot(goBarUp()) 
+        output$goShowBarDown <- renderPlot(goBarDown())
+        output$goShowBarAll <- renderPlot(goBarAll())
+        
+        fluidRow(
+          tabsetPanel(
+            tabPanel('Up regulation', DT::DTOutput('goShowMatrixUp'),
+                     downloadButton('getGOMatrixUp', 'Save'),
+                     plotOutput('goShowDotUp', width = 800, height = goHeight()),
+                     downloadButton('goDotUpSave', 'Save(.pdf)'),
+                     plotOutput('goShowBarUp', width = 800, height = goHeight()),
+                     downloadButton('goBarUpSave', 'Save(.pdf)')),
+            tabPanel('Down regulation', DT::DTOutput('goShowMatrixDown'),
+                     downloadButton('getGOMatrixDown', 'Save'),
+                     plotOutput('goShowDotDown', width = 800, height = goHeight()),
+                     downloadButton('goDotDownSave', 'Save(.pdf)'),
+                     plotOutput('goShowBarDown', width = 800, height = goHeight()),
+                     downloadButton('goBarDownSave', 'Save(.pdf)'),),
+            tabPanel('All', DT::DTOutput('goShowMatrixAll'),
+                     downloadButton('getGOMatrixAll', 'Save'),
+                     plotOutput('goShowDotAll', width = 800, height = goHeight()),
+                     downloadButton('goDotAllSave', 'Save(.pdf)'),
+                     plotOutput('goShowBarAll', width = 800, height = goHeight()),
+                     downloadButton('goBarAllSave', 'Save(.pdf)'),)
+          )
         )
-      )    
+      }
+      #自输入基因
+      else{
+        output$goShowMatrixSelf <- DT::renderDT(goResult()$self[[1]], options=list(pageLength = 2))
+        output$goShowDotSelf <- renderPlot(goDotSelf())
+        output$goShowBarSelf <- renderPlot(goBarSelf())
+        fluidRow(
+          DT::DTOutput('goShowMatrixSelf'),
+          downloadButton('getGOMatrixSelf', 'Save'),
+          plotOutput('goShowDotSelf', width = 800, height = goHeight()),
+          downloadButton('goDotSelfSave', 'Save(.pdf)'),
+          plotOutput('goShowBarSelf', width = 800, height = goHeight()),
+          downloadButton('goBarSelfSave', 'Save(.pdf)')
+        )
+      }
     }
     else{shinyjs::hide('goShow')}
   })
   output$keggShow <- renderUI({
     if(!is.null(keggResult())){
       shinyjs::show('keggShow')
-      output$keggShowMatrixUp <- DT::renderDT(keggResult()$up[[1]], options=list(pageLength = 2))
-      output$keggShowMatrixDown <- DT::renderDT(keggResult()$down[[1]], options=list(pageLength = 2))
-      output$keggShowMatrixAll <- DT::renderDT(keggResult()$all[[1]], options=list(pageLength = 2))
-      
-      output$keggShowDotUp <- renderPlot(keggDotUp()) 
-      output$keggShowDotDown <- renderPlot(keggDotDown())
-      output$keggShowDotAll <- renderPlot(keggDotAll())
-      
-      output$keggShowBarUp <- renderPlot(keggBarUp()) 
-      output$keggShowBarDown <- renderPlot(keggBarDown())
-      output$keggShowBarAll <- renderPlot(keggBarAll())
-      
-      fluidRow(tabsetPanel(
-        tabPanel('Up', DT::DTOutput('keggShowMatrixUp'),
-                 downloadButton('getKEGGMatrixUp', 'Save'),
-                 plotOutput('keggShowDotUp', height = keggHeight()),
-                 downloadButton('keggDotUpSave', 'Save(.pdf)'),
-                 plotOutput('keggShowBarUp', height = keggHeight()),
-                 downloadButton('keggBarUpSave', 'Save(.pdf)')),
-        tabPanel('Down', DT::DTOutput('keggShowMatrixDown'),
-                 downloadButton('getKEGGMatrixDown', 'Save'),
-                 plotOutput('keggShowDotDown', height = keggHeight()),
-                 downloadButton('keggDotDownSave', 'Save(.pdf)'),
-                 plotOutput('keggShowBarDown', height = keggHeight()),
-                 downloadButton('keggBarDownSave', 'Save(.pdf)')),
-        tabPanel('All', DT::DTOutput('keggShowMatrixAll'),
-                 downloadButton('getKEGGMatrixAll', 'Save'),
-                 plotOutput('keggShowDotAll', height = keggHeight()),
-                 downloadButton('keggDotAllSave', 'Save(.pdf)'),
-                 plotOutput('keggShowBarAll', height = keggHeight()),
-                 downloadButton('keggBarAllSave', 'Save(.pdf)'))
+      #DEG
+      if(isolate(input$enrichGene) == 'DEG'){
+        output$keggShowMatrixUp <- DT::renderDT(keggResult()$up[[1]], options=list(pageLength = 2))
+        output$keggShowMatrixDown <- DT::renderDT(keggResult()$down[[1]], options=list(pageLength = 2))
+        output$keggShowMatrixAll <- DT::renderDT(keggResult()$all[[1]], options=list(pageLength = 2))
+        
+        output$keggShowDotUp <- renderPlot(keggDotUp()) 
+        output$keggShowDotDown <- renderPlot(keggDotDown())
+        output$keggShowDotAll <- renderPlot(keggDotAll())
+        
+        output$keggShowBarUp <- renderPlot(keggBarUp()) 
+        output$keggShowBarDown <- renderPlot(keggBarDown())
+        output$keggShowBarAll <- renderPlot(keggBarAll())
+        
+        fluidRow(tabsetPanel(
+          tabPanel('Up', DT::DTOutput('keggShowMatrixUp'),
+                   downloadButton('getKEGGMatrixUp', 'Save'),
+                   plotOutput('keggShowDotUp', height = keggHeight()),
+                   downloadButton('keggDotUpSave', 'Save(.pdf)'),
+                   plotOutput('keggShowBarUp', height = keggHeight()),
+                   downloadButton('keggBarUpSave', 'Save(.pdf)')),
+          tabPanel('Down', DT::DTOutput('keggShowMatrixDown'),
+                   downloadButton('getKEGGMatrixDown', 'Save'),
+                   plotOutput('keggShowDotDown', height = keggHeight()),
+                   downloadButton('keggDotDownSave', 'Save(.pdf)'),
+                   plotOutput('keggShowBarDown', height = keggHeight()),
+                   downloadButton('keggBarDownSave', 'Save(.pdf)')),
+          tabPanel('All', DT::DTOutput('keggShowMatrixAll'),
+                   downloadButton('getKEGGMatrixAll', 'Save'),
+                   plotOutput('keggShowDotAll', height = keggHeight()),
+                   downloadButton('keggDotAllSave', 'Save(.pdf)'),
+                   plotOutput('keggShowBarAll', height = keggHeight()),
+                   downloadButton('keggBarAllSave', 'Save(.pdf)'))
+          )
         )
-      )    
+      }
+      #自输入基因
+      else{
+        output$keggShowMatrixSelf <- DT::renderDT(keggResult()$self[[1]], options=list(pageLength = 2))
+        output$keggShowDotSelf <- renderPlot(keggDotSelf())
+        output$keggShowBarSelf <- renderPlot(keggBarSelf())
+        fluidRow(
+          DT::DTOutput('keggShowMatrixSelf'),
+          downloadButton('getKEGGMatrixSelf', 'Save'),
+          plotOutput('keggShowDotSelf', width = 800, height = keggHeight()),
+          downloadButton('keggDotSelfSave', 'Save(.pdf)'),
+          plotOutput('keggShowBarSelf', width = 800, height = keggHeight()),
+          downloadButton('keggBarSelfSave', 'Save(.pdf)')
+        )
+      }
     }
     else{shinyjs::hide('keggShow')}
   })
@@ -866,6 +950,9 @@ app_server <- function( input, output, session ) {
     output$getGOMatrixAll <- downloadHandler(
       filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_GO_All.csv', sep='') },
       content = function(file) {fwrite(goResult()$all[[1]], file, row.names = TRUE)})
+    output$getGOMatrixSelf <- downloadHandler(
+      filename = function() { 'GO.csv' },
+      content = function(file) {fwrite(goResult()$self[[1]], file, row.names = TRUE)})
     output$getKEGGMatrixUp <- downloadHandler(
       filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_Up.csv', sep='') },
       content = function(file) {fwrite(keggResult()$up[[1]], file, row.names = TRUE)})
@@ -875,6 +962,9 @@ app_server <- function( input, output, session ) {
     output$getKEGGMatrixAll <- downloadHandler(
       filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_All.csv', sep='') },
       content = function(file) {fwrite(keggResult()$all[[1]], file, row.names = TRUE)})
+    output$getKEGGMatrixSelf <- downloadHandler(
+      filename = function() { 'KEGG.csv' },
+      content = function(file) {fwrite(keggResult()$self[[1]], file, row.names = TRUE)})
     output$getCorMat <- downloadHandler(
       filename = function() { paste(paste(input$corFactor1[[1]],strsplit(input$clinicalData$name, '[.]')[[1]][1],sep = '_'), '_cor.csv', sep='') },
       content = function(file) {fwrite(corMatResult(), file, row.names = TRUE)})
@@ -1011,7 +1101,26 @@ app_server <- function( input, output, session ) {
                                        limitsize = FALSE)},
       contentType = 'pdf'
     )
-    
+    output$goDotSelfSave <- downloadHandler(
+      filename = function() { 'GO_Dot.pdf' },
+      content = function(file) {ggsave(file, plot = goDotSelf(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$goBarSelfSave <- downloadHandler(
+      filename = function() { 'GO_Bar.pdf' },
+      content = function(file) {ggsave(file, plot = goBarSelf(), device = 'pdf',
+                                       width = 800/3,
+                                       height = goHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
     #kegg图下载
     output$keggDotUpSave <- downloadHandler(
       filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_Up_Dot.pdf', sep='') },
@@ -1066,6 +1175,26 @@ app_server <- function( input, output, session ) {
     output$keggBarAllSave <- downloadHandler(
       filename = function() { paste(paste(input$deaFactor,strsplit(input$deaData$name, '[.]')[[1]][1],sep = '_'), '_KEGG_All_Bar.pdf', sep='') },
       content = function(file) {ggsave(file, plot = keggBarAll(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$keggDotSelfSave <- downloadHandler(
+      filename = function() { 'KEGG_Dot.pdf' },
+      content = function(file) {ggsave(file, plot = keggDotSelf(), device = 'pdf', 
+                                       width = 800/3,
+                                       height = keggHeight()/3,
+                                       units = 'mm',
+                                       dpi = 600,
+                                       limitsize = FALSE)},
+      contentType = 'pdf'
+    )
+    output$keggBarSelfSave <- downloadHandler(
+      filename = function() { 'KEGG_Bar.pdf' },
+      content = function(file) {ggsave(file, plot = keggBarSelf(), device = 'pdf',
                                        width = 800/3,
                                        height = keggHeight()/3,
                                        units = 'mm',

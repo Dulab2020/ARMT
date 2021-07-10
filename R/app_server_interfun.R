@@ -280,7 +280,7 @@ diyForest <- function(data){
 }
 
 #edgeR
-deaEdgeR <- function(df, condition, h, control){
+deaEdgeR <- function(df, condition, h, control, normalizeWay){
   pr <- Progress$new(min=1, max=15)
   on.exit(pr$close())
   condition <-  condition[condition[,1] %in% c(h, control), , drop = FALSE]
@@ -299,7 +299,7 @@ deaEdgeR <- function(df, condition, h, control){
   pr$set(value = 7)
   genelist.filted<-genelist[keep,keep.lib.sizes=FALSE]
   pr$set(value = 8)
-  genelist.norm <- calcNormFactors(genelist.filted)
+  genelist.norm <- calcNormFactors(genelist.filted, method = normalizeWay)
   pr$set(value = 9)
   design <- model.matrix(~condition)
   pr$set(value = 10)
@@ -434,32 +434,38 @@ eKegg <- function(deg, pc = 0.1, qc = 0.2){
 }
 #Bar图
 plotBar <- function(data, eway, showNum = 5){
-  if(eway == 'GO'){
-    if('ONTOLOGY' %in% colnames(data@result)){
-      pout <- barplot(data, split="ONTOLOGY",showCategory=showNum)+
-            facet_grid(ONTOLOGY~., scale="free")
+  if(is.null(data)){return(NULL)}
+  else{
+    if(eway == 'GO'){
+      if('ONTOLOGY' %in% colnames(data@result)){
+        pout <- barplot(data, split="ONTOLOGY",showCategory=showNum)+
+              facet_grid(ONTOLOGY~., scale="free")
+      }
+      else{pout <- barplot(data, showCategory=showNum)}
     }
-    else{pout <- barplot(data, showCategory=showNum)}
+    else if(eway == 'KEGG'){
+      pout <- barplot(data,showCategory=showNum)
+    }
+    return(pout)
   }
-  else if(eway == 'KEGG'){
-    pout <- barplot(data,showCategory=showNum)
-  }
-  return(pout)
 }
 
 #Dot图
 plotDot <- function(data, eway, showNum = 5){
-  if(eway == 'GO'){
-    if('ONTOLOGY' %in% colnames(data@result)){
-      pout <- dotplot(data, split="ONTOLOGY",showCategory=showNum)+
-        facet_grid(ONTOLOGY~., scale="free")
+  if(is.null(data)){return(NULL)}
+  else{
+    if(eway == 'GO'){
+      if('ONTOLOGY' %in% colnames(data@result)){
+        pout <- dotplot(data, split="ONTOLOGY",showCategory=showNum)+
+          facet_grid(ONTOLOGY~., scale="free")
+      }
+      else{pout <- dotplot(data,showCategory=showNum)}
     }
-    else{pout <- dotplot(data,showCategory=showNum)}
+    else if(eway == 'KEGG'){
+      pout <- dotplot(data,showCategory=showNum)
+    }
+    return(pout)
   }
-  else if(eway == 'KEGG'){
-    pout <- dotplot(data,showCategory=showNum)
-  }
-  return(pout)
 }
 
 #相关系数
