@@ -26,7 +26,7 @@ app_ui <- function(request) {
                                       br(),
                                       h4('Geneset Data'),
                                       fileInput('genesetCsv', 'Input geneset .csv file:',
-                                                accept=c('text/csv', 'text/comma-separated-values,text/plain')),
+                                                accept='.csv'),
                                       actionButton('creatGmt', 'Creat gmt file')
                                     ),
                                     mainPanel(
@@ -43,7 +43,7 @@ app_ui <- function(request) {
                                   sidebarLayout(
                                     sidebarPanel(
                                       fileInput('countsMatrix', 'Input counts file with Ensembl ID:',
-                                                accept=c('text/csv', 'text/comma-separated-values,text/plain')),
+                                                accept='.csv'),
                                       selectInput('sampleType', 'Sample Type', choices = c('All' = 'all', 'Tumor' = 'tumor', 'Normal'= 'normal'), selected = 'tumor'),
                                       checkboxGroupInput('genesetlist', 'Choose the gene set in MSigDB:',
                                                          choices = c(

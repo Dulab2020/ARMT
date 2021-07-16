@@ -179,6 +179,7 @@ surAnalysis <- function(data, survivaltime, sta, t){
 #单因素COX
 singleCox <- function(data, survivaltime, sta, t){
   data[,survivaltime]<-as.numeric(data[,survivaltime])
+  data <- data[!is.na(data[,t]), , drop = FALSE]
   ort <- t
   t <- gsub("[^[:alnum:]]", '_', t)
   names(data)[names(data) == ort] <- t
@@ -318,7 +319,7 @@ deaEdgeR <- function(df, condition, h, control, normalizeWay){
 
 #Limma
 deaLimma <- function(df, condition, h, control){
-  pr <- Progress$new(min=1, max=11)
+  pr <- Progress$new(min=1, max=14)
   on.exit(pr$close())
   df <- t(df)
   pr$set(message = 'Calculation in Limma',detail = 'This may take a while...', value = 1)
@@ -338,10 +339,16 @@ deaLimma <- function(df, condition, h, control){
   pr$set(value = 8)
   fit <- lmFit(df,design)
   pr$set(value = 9)
-  fit2 <- eBayes(fit)
+  conVector <- paste(h, control, sep = '-')
   pr$set(value = 10)
-  result <- topTable(fit2, coef=1, n=Inf)
+  contrastMatrix <- makeContrasts(contrasts = conVector, levels = design)
   pr$set(value = 11)
+  fit <- contrasts.fit(fit, contrastMatrix)
+  pr$set(value = 12)
+  fit2 <- eBayes(fit)
+  pr$set(value = 13)
+  result <- topTable(fit2, coef=1, n=Inf)
+  pr$set(value = 14)
   return(result)
 }
 

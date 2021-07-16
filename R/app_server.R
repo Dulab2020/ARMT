@@ -397,7 +397,9 @@ app_server <- function( input, output, session ) {
     wayDea <- isolate(input$deaWay)
     if(!is.null(deaResult())){
       if(!is.data.frame(deaResult())){
+        #非分组
         if(all(names(deaResult()) == c('results', 'SampleSummary'))){deaToPrint <- deaResult()}
+        #分组
         else{deaToPrint <- deaResult()[[input$deaOutGroup]]}
       }
       else{deaToPrint <- deaResult()}
@@ -450,7 +452,7 @@ app_server <- function( input, output, session ) {
       }
       else{shinyjs::hide('volcanoPicture')}
       if(wayDea != 'maf'){
-        differResult[any(differResult$Status == 'Up', differResult$Status == 'Down'), , drop = FALSE]
+        differResult[differResult$Status == 'Up'|differResult$Status == 'Down', , drop = FALSE]
       }
       else{differResult}
     }
