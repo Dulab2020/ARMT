@@ -870,8 +870,8 @@ app_server <- function( input, output, session ) {
       output$mafSum <- renderPlot(plotmafSummary(maf = mafTemp, top = input$mafTop))
       output$mafSumWaterFall <- renderPlot(oncoplot(maf = mafTemp, top = input$mafTop), width = 1000)
       output$mafSumPathway <- renderCachedPlot({sump <- OncogenicPathways(mafTemp)
-      output$selectSumPathway <- renderUI(selectInput('mafSumKeyPath', 'Choose a pathway:', choices = rev(sump$Pathway)))}, 
-      cacheKeyExpr = {sump <- OncogenicPathways(mafTemp)})
+                              output$selectSumPathway <- renderUI(selectInput('mafSumKeyPath', 'Choose a pathway:', choices = rev(sump$Pathway)))}, 
+                              cacheKeyExpr = {sump <- OncogenicPathways(mafTemp)})
       output$mafSumKeyPathPlot <- renderPlot(if(!is.null(input$mafSumKeyPath)){PlotOncogenicPathways(mafTemp, pathways = input$mafSumKeyPath)})
       output$mafShow <- renderUI({fluidRow(plotOutput('mafSum'),
                                            plotOutput('mafSumWaterFall'),

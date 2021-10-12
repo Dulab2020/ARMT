@@ -176,7 +176,7 @@ app_ui <- function(request) {
                                         actionButton('calCor', 'Calculate'),
                                         uiOutput('corActiveUI'),
                                         sliderInput('corrCut', 'r Cut Off(>):', min = 0, max = 1, value = 0, step = 0.01),
-                                        sliderInput('corpCut', 'p Cut Off(<):', min = 0, max = 2, value = 0.05, step = 0.01)
+                                        sliderInput('corpCut', 'p Cut Off(<):', min = 0, max = 1, value = 0.05, step = 0.01)
                                       ),
                                       mainPanel(
                                         uiOutput('corShow'),
