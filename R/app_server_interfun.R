@@ -1,3 +1,5 @@
+#'  The application internal function
+#'  
 #'  @import GSVA
 #'  @import GSVAdata
 #'  @import maftools

@@ -58,9 +58,6 @@ app_server <- function( input, output, session ) {
     else
       h3('Gene Set')
   })
-  observeEvent(input$creatGmt,{
-    writeGmt(genesetMatrix(), paste(strsplit(input$genesetCsv$name, '[.]')[[1]][1], '.gmt', sep='') )
-  })
   output$genesetMatrixShow <- DT::renderDataTable(genesetMatrix())
   #tpm,tpmMatrix改为tpm列表，包含有counts矩阵和分类类型
   tpmMatrix <- reactive({
@@ -937,6 +934,9 @@ app_server <- function( input, output, session ) {
     output$getInterClinical <- downloadHandler(
       filename = function() { paste(input$cancerType[[1]],'internal_Clinical.csv', sep='_') },
       content = function(file) {fwrite(chooseInterClinical(), file, row.names = TRUE)}) 
+    output$creatGmt <- downloadHandler(
+      filename = function() {paste(strsplit(input$genesetCsv$name, '[.]')[[1]][1], '.gmt', sep='')},
+      content = function(file) {writeGmt(genesetMatrix(), file)})
     output$getNewClinical <- downloadHandler(
       filename = function() { paste(strsplit(input$clinicalData$name, '[.]')[[1]][1], '_new.csv', sep='') },
       content = function(file) {fwrite(newClinalData(), file, row.names = TRUE)})

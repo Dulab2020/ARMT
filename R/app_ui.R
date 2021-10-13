@@ -27,7 +27,7 @@ app_ui <- function(request) {
                                       h4('Geneset Data'),
                                       fileInput('genesetCsv', 'Input geneset .csv file:',
                                                 accept='.csv'),
-                                      actionButton('creatGmt', 'Creat gmt file')
+                                      downloadButton('creatGmt', 'Creat gmt file')
                                     ),
                                     mainPanel(
                                       uiOutput('titleGeneset'),
