@@ -36,7 +36,8 @@ Imports:
     maftools,
     survminer,
     ggcorrplot,
-    patchwork
+    patchwork,
+    rvcheck (<= 0.1.8)
 biocViews:
 Encoding: UTF-8
 LazyData: true
