@@ -38,7 +38,6 @@ Imports:
     survminer,
     ggcorrplot,
     patchwork
-    
 biocViews:
 Encoding: UTF-8
 LazyData: true
