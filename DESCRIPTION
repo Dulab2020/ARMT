@@ -12,6 +12,7 @@ Description: The aim of ARMT is :
     iii) explore the correlation of gene expression and mutation.
 License: GPL(>=3)
 Imports: 
+    rvcheck (<= 0.1.8),
     BiocManager,
     config,
     golem,
@@ -36,8 +37,8 @@ Imports:
     maftools,
     survminer,
     ggcorrplot,
-    patchwork,
-    rvcheck (<= 0.1.8)
+    patchwork
+    
 biocViews:
 Encoding: UTF-8
 LazyData: true
