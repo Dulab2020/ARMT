@@ -45,7 +45,7 @@ app_server <- function( input, output, session ) {
       shinyjs::show(id = 'titleInterClinical')}
     else{
       shinyjs::hide(id = 'titleInterClinical')}
-    choInterClinical <- interClinical[which(interClinical$type == input$cancerType),]
+    choInterClinical <- interClinical[which(interClinical$type %in% input$cancerType),]
     naFlag <- apply(choInterClinical, 2, function(x) all(x =='#N/A'))
     choInterClinical[,which(!naFlag)]
   })
