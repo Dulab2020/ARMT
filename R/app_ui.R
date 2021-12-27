@@ -42,8 +42,10 @@ app_ui <- function(request) {
                          tabPanel('Normalization & GSVA',titlePanel("Normalization & GSVA"),
                                   sidebarLayout(
                                     sidebarPanel(
-                                      fileInput('countsMatrix', 'Input counts file with Ensembl ID:',
+                                      fileInput('countsMatrix', 'Input counts or tpm matrix',
                                                 accept='.csv'),
+                                      checkboxInput("tpmInFlag", "The input data is tpm matrix", value = FALSE),
+                                      checkboxInput("transidFlag", "Transfer gene ID from Ensemble to symbol", value = TRUE),
                                       selectInput('sampleType', 'Sample Type', choices = c('All' = 'all', 'Tumor' = 'tumor', 'Normal'= 'normal'), selected = 'tumor'),
                                       checkboxGroupInput('genesetlist', 'Choose the gene set in MSigDB:',
                                                          choices = c(

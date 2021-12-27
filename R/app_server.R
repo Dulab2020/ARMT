@@ -62,23 +62,41 @@ app_server <- function( input, output, session ) {
   #tpm,tpmMatrix改为tpm列表，包含有counts矩阵和分类类型
   tpmMatrix <- reactive({
     countsData <- readMatrix(input$countsMatrix)
-    if (!is.null(countsData)){
+    tpmIn <- NULL
+    if(!is.null(countsData)){
+      if(input$tpmInFlag){tpmIn <- countsData}
+      else{tpmIn <- NULL}
+    }
+    if (!is.null(countsData)&is.null(tpmIn)){
       output$tpmDownload <- renderUI({
         fluidRow(column(width = 4, downloadButton('downloadTPM', 'Save TPM')),
                  column(width = 4, downloadButton('downloadCounts', 'Save Counts')))
       })
       output$titleTpm <- renderUI({h2('TPM')})
       if(input$sampleType == 'all'){
-        list(tpm = countsToTPM(countsData), counts = countsData, type = 'all')}
+        matrixList <- list(tpm = countsToTPM(countsData, transID = input$transidFlag), counts = countsData, type = 'all')}
       else if(input$sampleType == 'tumor'){
         cts <- classifyCounts(countsData)$tm
-        list(tpm = countsToTPM(cts), counts = cts, type = 'tumor')
+        matrixList <- list(tpm = countsToTPM(cts, transID = input$transidFlag), counts = cts, type = 'tumor')
       }
       else if(input$sampleType ==  'normal'){
         cts <- classifyCounts(countsData)$nr
-        list(tpm = countsToTPM(cts), counts = cts, type = 'norm')
+        matrixList <- list(tpm = countsToTPM(cts, transID = input$transidFlag), counts = cts, type = 'norm')
       }
     }
+    if (!is.null(tpmIn)){
+      output$tpmDownload <- renderUI({downloadButton('downloadTPM', 'Save TPM')})
+      output$titleTpm <- renderUI({h2('TPM')})
+      if(input$sampleType == 'all'){
+        matrixList <- list(tpm = tpmIn, counts = NULL, type = 'all')}
+      else if(input$sampleType == 'tumor'){
+        matrixList <- list(tpm = classifyCounts(tpmIn)$tm, counts = NULL, type = 'tumor')
+      }
+      else if(input$sampleType ==  'normal'){
+        matrixList <- list(tpm = classifyCounts(tpmIn)$nr, counts = NULL, type = 'norm')
+      }
+    }
+    if(!is.null(input$countsMatrix)){matrixList}
   })
   output$tpmShow <- DT::renderDataTable({tpmMatrix()$tpm})
   #GSVA

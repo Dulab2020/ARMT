@@ -64,7 +64,7 @@ classifyCounts <- function(allData){
 
 }
 #TPM标准化
-countsToTPM <- function(countsMatrix){
+countsToTPM <- function(countsMatrix, transID = TRUE){
   p <- Progress$new(min = 1, max = 12)
   on.exit(p$close())
   p$set(message = 'TPM Normalizing', detail = 'This may take a while...', value = 1)
@@ -81,15 +81,22 @@ countsToTPM <- function(countsMatrix){
   tpm_counts <- as.data.frame(t(t(tmp)/colSums(tmp))*1000000)   #标准化
   p$set(value = 7)
   #id转换及去重
-  ids <- data.frame(symbol = geneLength$Gene_name, mean = apply(tpm_counts, 1, mean))
-  p$set(value = 8)
-  ids <- ids[order(ids$mean,decreasing = T), ] #ids$symbol按照ids$median中位数从大到小排列的顺序排序，将对应的行赋值为一个新的ids
-  p$set(value = 9)
-  ids <- ids[!duplicated(ids$symbol), ] #将symbol这一列取取出重复项，'!'为否，即取出不重复的项，去除重复的gene ，保留每个基因最大表达量结果s
-  p$set(value = 10)
-  tpm_counts <- tpm_counts[rownames(ids),] #新的ids取出ensembl名，将tpm_counts按照取出的这一列中的每一行组成一个新的
-  p$set(value = 11)
-  rownames(tpm_counts) <- ids$symbol
+  if(transID){
+    ids <- data.frame(symbol = geneLength$Gene_name, mean = apply(tpm_counts, 1, mean))
+    p$set(value = 8)
+    ids <- ids[order(ids$mean,decreasing = T), ] #ids$symbol按照ids$median中位数从大到小排列的顺序排序，将对应的行赋值为一个新的ids
+    p$set(value = 9)
+    ids <- ids[!duplicated(ids$symbol), ] #将symbol这一列取取出重复项，'!'为否，即取出不重复的项，去除重复的gene ，保留每个基因最大表达量结果s
+    p$set(value = 10)
+    tpm_counts <- tpm_counts[rownames(ids),] #新的ids取出ensembl名，将tpm_counts按照取出的这一列中的每一行组成一个新的
+    p$set(value = 11)
+    rownames(tpm_counts) <- ids$symbol
+  }
+  else{
+    p$set(value = 8)
+    p$set(value = 9)
+    p$set(value = 10)
+    p$set(value = 11)}
   #去除在所有样本中表达为零的基因
   p$set(value = 12)
   tpm_counts <- tpm_counts[rowSums(tpm_counts) >0,] 
