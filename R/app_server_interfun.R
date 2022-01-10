@@ -71,10 +71,18 @@ countsToTPM <- function(countsMatrix, transID = TRUE){
   rownames(countsMatrix) <- unlist(lapply(strsplit(rownames(countsMatrix), "[.]"), function(x) x[1]))
   p$set(value = 2)
   rownames(geneLength) <- unlist(lapply(strsplit(rownames(geneLength), "[.]"), function(x) x[1]))
-  p$set(value = 3)
-  countsMatrix <- countsMatrix[rownames(countsMatrix) %in% rownames(geneLength), , drop = FALSE]
-  p$set(value = 4)
-  geneLength <- geneLength[match(rownames(countsMatrix), rownames(geneLength)), , drop = FALSE]
+  if(transID){
+    p$set(value = 3)
+    countsMatrix <- countsMatrix[rownames(countsMatrix) %in% rownames(geneLength), , drop = FALSE]
+    p$set(value = 4)
+    geneLength <- geneLength[match(rownames(countsMatrix), rownames(geneLength)), , drop = FALSE]
+  }
+  else{
+    p$set(value = 3)
+    countsMatrix <- countsMatrix[rownames(countsMatrix) %in% geneLength$Gene_name, , drop = FALSE]
+    p$set(value = 3)
+    geneLength <- geneLength[match(rownames(countsMatrix), geneLength$Gene_name),,drop = FALSE]
+  }
   p$set(value = 5)
   tmp <- countsMatrix/geneLength$Gene_length 
   p$set(value = 6)
