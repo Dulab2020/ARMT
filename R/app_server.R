@@ -25,13 +25,12 @@
 #' @import GSEABase
 #' @import ggcorrplot
 #' @import patchwork
-#' @import R.utils
 #' @noRd
 app_server <- function( input, output, session ) {
   options(shiny.maxRequestSize=-1) # Remove limit of upload
   options(shiny.deprecation.messages=FALSE)
   options(warn =-1)
-  R.utils::setOption("clusterProfiler.download.method", "auto")
+  #R.utils::setOption("clusterProfiler.download.method", "auto")
   #下载TCGA文件
   observe({
     allFlag <- input$all
