@@ -13,6 +13,7 @@ Description: The aim of ARMT is :
 License: GPL(>=3)
 Imports: 
     rvcheck (<= 0.1.8),
+    rlang (>=1.0.6),
     BiocManager,
     config,
     golem,
